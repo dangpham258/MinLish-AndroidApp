@@ -1,0 +1,16 @@
+{
+  "name": "minlish-email-api",
+  "version": "1.0.0",
+  "description": "Email API for password reset",
+  "main": "send-email-api.js",
+  "scripts": {
+    "start": "node send-email-api.js",
+    "dev": "node send-email-api.js"
+  },
+  "dependencies": {
+    "resend": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
