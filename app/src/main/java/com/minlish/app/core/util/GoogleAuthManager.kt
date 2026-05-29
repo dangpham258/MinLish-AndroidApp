@@ -1,14 +1,17 @@
 package com.minlish.app.core.util
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.util.Log
-import androidx.credentials.ClearCredentialStateRequest
-import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.GetCredentialResponse
-import androidx.credentials.exceptions.GetCredentialException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import androidx.activity.result.ActivityResultLauncher
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,43 +20,62 @@ import javax.inject.Singleton
 class GoogleAuthManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private val credentialManager = CredentialManager.create(context)
+    private val auth = FirebaseAuth.getInstance()
+    private lateinit var googleSignInClient: GoogleSignInClient
 
-    suspend fun signIn(serverClientId: String): String? {
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(serverClientId)
-            .setAutoSelectEnabled(false)
+    fun initialize() {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken("607388926260-net4bpfn8pof9tv8l72q80e67d3g0unk.apps.googleusercontent.com")
+            .requestEmail()
             .build()
 
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
-            .build()
+        googleSignInClient = GoogleSignIn.getClient(context, gso)
+    }
 
-        return try {
-            val result = credentialManager.getCredential(
-                context = context,
-                request = request
-            )
-            handleSignInResult(result)
-        } catch (e: Exception) {
-            Log.e("GoogleAuthManager", "Exception: ${e.javaClass.name}")
-            Log.e("GoogleAuthManager", "Message: ${e.message}")
-            e.printStackTrace()
-            null
+    fun signIn(activity: Activity) {
+        val signInIntent = googleSignInClient.signInIntent
+        activity.startActivityForResult(signInIntent, RC_SIGN_IN)
+    }
+
+    fun handleSignInResult(data: Intent?, onSuccess: (GoogleSignInAccount) -> Unit, onError: (Exception) -> Unit) {
+        val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+        
+        task.addOnSuccessListener { account ->
+            onSuccess(account)
+        }.addOnFailureListener { exception ->
+            Log.e("GoogleAuthManager", "Google Sign-In failed", exception)
+            onError(exception)
         }
     }
 
-    private fun handleSignInResult(result: GetCredentialResponse): String? {
-        val credential = result.credential
-        if (credential is GoogleIdTokenCredential) {
-            return credential.idToken
-        }
-        Log.e("GoogleAuthManager", "Unexpected credential type: ${credential.javaClass.name}")
-        return null
+    fun getIdToken(account: GoogleSignInAccount): String? {
+        return account.idToken
     }
 
-    suspend fun signOut() {
-        credentialManager.clearCredentialState(ClearCredentialStateRequest())
+    fun signInWithCredential(idToken: String, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        
+        auth.signInWithCredential(credential)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { exception ->
+                Log.e("GoogleAuthManager", "Firebase Auth failed", exception)
+                onError(exception)
+            }
+    }
+
+    fun signOut(onComplete: () -> Unit = {}) {
+        googleSignInClient.signOut()
+            .addOnCompleteListener {
+                auth.signOut()
+                onComplete()
+            }
+    }
+
+    fun getCurrentUser() = auth.currentUser
+
+    companion object {
+        const val RC_SIGN_IN = 9001
     }
 }

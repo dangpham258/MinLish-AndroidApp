@@ -2,7 +2,6 @@ package com.minlish.app.features.auth.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minlish.app.core.util.Constants
 import com.minlish.app.core.util.GoogleAuthManager
 import com.minlish.app.features.auth.domain.repository.AuthRepository
 import com.minlish.app.features.auth.domain.usecase.GetAuthStateUseCase
@@ -30,6 +29,7 @@ class AuthViewModel @Inject constructor(
 
     init {
         checkAuthState()
+        googleAuthManager.initialize()
     }
 
     private fun checkAuthState() {
@@ -68,23 +68,39 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun onGoogleSignIn() {
+    fun onGoogleSignInResult(
+        idToken: String?,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        if (idToken == null) {
+            onError("Đăng nhập Google thất bại")
+            return
+        }
+
         viewModelScope.launch {
             _isLoading.value = true
-            val idToken = googleAuthManager.signIn(Constants.GOOGLE_SERVER_CLIENT_ID)
-            if (idToken != null) {
-                val result = authRepository.loginWithGoogle(idToken)
-                if (result.isSuccess) {
-                    _eventFlow.emit(UiEvent.AuthSuccess)
-                } else {
-                    _eventFlow.emit(UiEvent.ShowError(result.exceptionOrNull()?.message ?: "Đăng nhập Google thất bại"))
-                }
-            } else {
-                _eventFlow.emit(UiEvent.ShowError("Không tìm thấy tài khoản Google. Vui lòng thêm tài khoản Google trong Cài đặt > Tài khoản > Thêm tài khoản > Google"))
-            }
+            val result = authRepository.loginWithGoogle(idToken)
             _isLoading.value = false
+            if (result.isSuccess) {
+                onSuccess()
+            } else {
+                onError(result.exceptionOrNull()?.message ?: "Đăng nhập Google thất bại")
+            }
         }
     }
+
+    fun signOut(onComplete: () -> Unit = {}) {
+        googleAuthManager.signOut {
+            viewModelScope.launch {
+                authRepository.logout()
+                _isUserLoggedIn.value = false
+                onComplete()
+            }
+        }
+    }
+
+    fun getGoogleAuthManager() = googleAuthManager
 
     // Firebase Auth Password Reset
     suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
