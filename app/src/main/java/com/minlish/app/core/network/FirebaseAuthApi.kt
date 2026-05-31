@@ -33,11 +33,9 @@ class FirebaseAuthApi @Inject constructor() {
             
             Result.success(
                 User(
-                    uid = firebaseUser.uid,
+                    id = firebaseUser.uid,
                     name = name,
-                    email = email,
-                    accessToken = idToken,
-                    refreshToken = ""
+                    email = email
                 )
             )
         } catch (e: Exception) {
@@ -65,11 +63,9 @@ class FirebaseAuthApi @Inject constructor() {
             
             Result.success(
                 User(
-                    uid = firebaseUser.uid,
+                    id = firebaseUser.uid,
                     name = firebaseUser.displayName ?: email.substringBefore("@"),
-                    email = email,
-                    accessToken = idToken,
-                    refreshToken = ""
+                    email = email
                 )
             )
         } catch (e: Exception) {
@@ -98,11 +94,9 @@ class FirebaseAuthApi @Inject constructor() {
             
             Result.success(
                 User(
-                    uid = firebaseUser.uid,
+                    id = firebaseUser.uid,
                     name = firebaseUser.displayName ?: "Google User",
-                    email = firebaseUser.email ?: "",
-                    accessToken = token,
-                    refreshToken = ""
+                    email = firebaseUser.email ?: ""
                 )
             )
         } catch (e: Exception) {
@@ -148,4 +142,16 @@ class FirebaseAuthApi @Inject constructor() {
     }
 
     fun getCurrentUser(): FirebaseUser? = firebaseAuth.currentUser
+
+    fun signOut() {
+        firebaseAuth.signOut()
+    }
+
+    suspend fun getIdToken(): String? = withContext(Dispatchers.IO) {
+        try {
+            firebaseAuth.currentUser?.getIdToken(false)?.await()?.token
+        } catch (e: Exception) {
+            null
+        }
+    }
 }

@@ -2,7 +2,6 @@ package com.minlish.app.features.auth.data.repository
 
 import com.minlish.app.core.database.FirebaseDatabaseService
 import com.minlish.app.core.network.FirebaseAuthApi
-import com.minlish.app.features.auth.data.source.AuthLocalDataSource
 import com.minlish.app.features.auth.domain.model.User
 import com.minlish.app.features.auth.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
@@ -11,7 +10,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
-    private val authLocalDataSource: AuthLocalDataSource,
     private val firebaseAuthApi: FirebaseAuthApi,
     private val firebaseDatabaseService: FirebaseDatabaseService
 ) : AuthRepository {
@@ -22,9 +20,7 @@ class AuthRepositoryImpl @Inject constructor(
         val result = firebaseAuthApi.login(email, password)
 
         if (result.isSuccess) {
-            val user = result.getOrNull()!!
-            authLocalDataSource.saveTokens(user.accessToken ?: "", user.refreshToken ?: "")
-            _currentUser.value = user
+            _currentUser.value = result.getOrNull()
         }
 
         return result
@@ -37,11 +33,10 @@ class AuthRepositoryImpl @Inject constructor(
             val user = result.getOrNull()!!
             // Tao user trong Realtime Database
             firebaseDatabaseService.createUserIfNotExists(
-                uid = user.uid,
+                uid = user.id,
                 name = name,
                 email = email
             )
-            authLocalDataSource.saveTokens(user.accessToken ?: "", user.refreshToken ?: "")
             _currentUser.value = user
         }
 
@@ -55,11 +50,10 @@ class AuthRepositoryImpl @Inject constructor(
             val user = result.getOrNull()!!
             // Tao user trong Realtime Database
             firebaseDatabaseService.createUserIfNotExists(
-                uid = user.uid,
+                uid = user.id,
                 name = user.name,
                 email = user.email
             )
-            authLocalDataSource.saveTokens(user.accessToken ?: "", user.refreshToken ?: "")
             _currentUser.value = user
         }
 
@@ -67,7 +61,7 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun logout() {
-        authLocalDataSource.clear()
+        firebaseAuthApi.signOut()
         _currentUser.value = null
     }
 

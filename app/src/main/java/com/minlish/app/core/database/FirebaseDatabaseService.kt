@@ -4,6 +4,9 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.minlish.app.features.auth.domain.model.User
+import com.minlish.app.features.auth.domain.model.UserProfile
+import com.minlish.app.features.auth.domain.model.UserSetting
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -26,10 +29,22 @@ class FirebaseDatabaseService @Inject constructor() {
         val snapshot = userRef.get().await()
         
         if (!snapshot.exists()) {
+            val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+            val createdAt = dateFormat.format(java.util.Date())
+            
             val userData = mapOf(
+                "id" to uid,
                 "name" to name,
                 "email" to email,
-                "createdAt" to System.currentTimeMillis()
+                "createdAt" to createdAt,
+                "userProfile" to mapOf(
+                    "learningGoals" to emptyList<String>(),
+                    "initialLevel" to "B1"
+                ),
+                "userSetting" to mapOf(
+                    "dailyNewWordGoal" to 10,
+                    "dailyReviewGoal" to 50
+                )
             )
             userRef.setValue(userData).await()
         }
@@ -37,6 +52,11 @@ class FirebaseDatabaseService @Inject constructor() {
 
     suspend fun getUser(uid: String): DataSnapshot? {
         return usersRef.child(uid).get().await()
+    }
+
+    suspend fun getUserFromSnapshot(uid: String): User? {
+        val snapshot = usersRef.child(uid).get().await()
+        return snapshot.toUser()
     }
 
     fun observeUser(uid: String): Flow<DataSnapshot?> = callbackFlow {
@@ -57,7 +77,46 @@ class FirebaseDatabaseService @Inject constructor() {
         usersRef.child(uid).updateChildren(updates).await()
     }
 
+    suspend fun updateUserProfile(uid: String, learningGoals: List<String>, initialLevel: String) {
+        val updates = mapOf(
+            "userProfile/learningGoals" to learningGoals,
+            "userProfile/initialLevel" to initialLevel
+        )
+        usersRef.child(uid).updateChildren(updates).await()
+    }
+
+    suspend fun updateUserSetting(uid: String, dailyNewWordGoal: Int, dailyReviewGoal: Int) {
+        val updates = mapOf(
+            "userSetting/dailyNewWordGoal" to dailyNewWordGoal,
+            "userSetting/dailyReviewGoal" to dailyReviewGoal
+        )
+        usersRef.child(uid).updateChildren(updates).await()
+    }
+
     suspend fun deleteUser(uid: String) {
         usersRef.child(uid).removeValue().await()
+    }
+
+    private fun DataSnapshot.toUser(): User? {
+        return try {
+            User(
+                id = key ?: "",
+                name = child("name").getValue(String::class.java) ?: "",
+                email = child("email").getValue(String::class.java) ?: "",
+                createdAt = child("createdAt").getValue(String::class.java) ?: "",
+                userProfile = UserProfile(
+                    learningGoals = child("userProfile/learningGoals").children.mapNotNull {
+                        it.getValue(String::class.java)
+                    },
+                    initialLevel = child("userProfile/initialLevel").getValue(String::class.java) ?: "B1"
+                ),
+                userSetting = UserSetting(
+                    dailyNewWordGoal = child("userSetting/dailyNewWordGoal").getValue(Int::class.java) ?: 10,
+                    dailyReviewGoal = child("userSetting/dailyReviewGoal").getValue(Int::class.java) ?: 50
+                )
+            )
+        } catch (e: Exception) {
+            null
+        }
     }
 }

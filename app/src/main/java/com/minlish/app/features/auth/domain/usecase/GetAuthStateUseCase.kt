@@ -1,12 +1,10 @@
 package com.minlish.app.features.auth.domain.usecase
 
-import com.minlish.app.features.auth.data.source.AuthLocalDataSource
+import com.google.firebase.auth.FirebaseAuth
 import javax.inject.Inject
 
-class GetAuthStateUseCase @Inject constructor(
-    private val localDataSource: AuthLocalDataSource
-) {
+class GetAuthStateUseCase @Inject constructor() {
     operator fun invoke(): Boolean {
-        return !localDataSource.getAccessToken().isNullOrBlank()
+        return FirebaseAuth.getInstance().currentUser != null
     }
 }
