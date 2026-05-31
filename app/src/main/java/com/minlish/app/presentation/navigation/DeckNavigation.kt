@@ -1,6 +1,6 @@
 package com.minlish.app.presentation.navigation
 
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -31,7 +31,7 @@ sealed class DeckRoute(val route: String) {
 
 fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
     composable(route = DeckRoute.DeckList.route) {
-        val viewModel: DeckViewModel = viewModel()
+        val viewModel: DeckViewModel = hiltViewModel()
         ListOfDeckScreen(
             viewModel = viewModel,
             onNavigateToDeckDetail = { deckId ->
@@ -44,7 +44,7 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
     }
 
     composable(route = DeckRoute.CreateDeck.route) {
-        val viewModel: DeckViewModel = viewModel()
+        val viewModel: DeckViewModel = hiltViewModel()
         CreateNewDeckScreen(
             viewModel = viewModel,
             onNavigateBack = { navController.popBackStack() }
@@ -56,7 +56,7 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
         arguments = listOf(navArgument("deckId") { type = NavType.StringType })
     ) { backStackEntry ->
         val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
-        val viewModel: DeckViewModel = viewModel()
+        val viewModel: DeckViewModel = hiltViewModel()
 
         DeckDetailScreen(
             viewModel = viewModel,
@@ -84,7 +84,7 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
     ) { backStackEntry ->
         val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
         val wordId = backStackEntry.arguments?.getString("wordId")
-        val viewModel: DeckViewModel = viewModel()
+        val viewModel: DeckViewModel = hiltViewModel()
 
         AddUpdateWordScreen(
             viewModel = viewModel,

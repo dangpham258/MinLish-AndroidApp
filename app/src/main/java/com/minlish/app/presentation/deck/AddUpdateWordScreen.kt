@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
@@ -40,6 +41,10 @@ fun AddUpdateWordScreen(
     var vietnameseMeaning by remember { mutableStateOf(wordState?.vietnameseMeaning ?: "") }
     var context by remember { mutableStateOf(wordState?.context ?: "") }
     var collocation by remember { mutableStateOf("") } // Used in UI but maybe not in basic model
+
+    // Thêm biến state để track loading
+    val isSearching by viewModel.isSearchingAPI.collectAsState()
+    val contextCtx = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         containerColor = DeckColors.Background,
@@ -87,6 +92,31 @@ fun AddUpdateWordScreen(
                         onValueChange = { wordText = it },
                         placeholder = { Text("e.g. Ephemeral") },
                         modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            if (isSearching) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = DeckColors.Primary)
+                            } else {
+                                IconButton(onClick = {
+                                    if (wordText.isBlank()) return@IconButton
+                                    viewModel.searchWordToAutoFill(wordText) { fetchedWord ->
+                                        if (fetchedWord != null) {
+                                            // Nạp dữ liệu vào các ô
+                                            phonetic = fetchedWord.phonetic
+                                            partOfSpeech = fetchedWord.partOfSpeech
+                                            englishDefinition = fetchedWord.englishDefinition
+                                            vietnameseMeaning = fetchedWord.vietnameseMeaning
+                                            context = fetchedWord.context
+                                            android.widget.Toast.makeText(contextCtx, "Tự động điền thành công!", android.widget.Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            // Show Toast thông báo không tìm thấy
+                                            android.widget.Toast.makeText(contextCtx, "Không tìm thấy từ vựng này", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }) {
+                                    Icon(Icons.Default.Search, contentDescription = "Auto Fill", tint = DeckColors.Primary)
+                                }
+                            }
+                        },
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedContainerColor = DeckColors.SurfaceContainerLowest,

@@ -9,14 +9,3 @@ data class Deck(
     val streak: Int = 0,
     val totalWords: Int = 0
 )
-
-data class Word(
-    val id: String = "",
-    val deckId: String = "",
-    val word: String = "",
-    val phonetic: String = "",
-    val partOfSpeech: String = "",
-    val englishDefinition: String = "",
-    val vietnameseMeaning: String = "",
-    val context: String = "" // Examples
-)

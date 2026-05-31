@@ -6,9 +6,17 @@ import com.minlish.app.domain.model.Word
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.lifecycle.viewModelScope
+import com.minlish.app.domain.usecase.AutoFillWordUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 // TODO: Integrate with real use cases and repositories for Firebase & API
-class DeckViewModel : ViewModel() {
+@HiltViewModel
+class DeckViewModel @Inject constructor(
+    private val autoFillWordUseCase: AutoFillWordUseCase
+) : ViewModel() {
 
     private val _decks = MutableStateFlow<List<Deck>>(
         listOf(
@@ -24,6 +32,22 @@ class DeckViewModel : ViewModel() {
 
     private val _words = MutableStateFlow<List<Word>>(emptyList())
     val words: StateFlow<List<Word>> = _words.asStateFlow()
+
+    // Thêm state để quản lý việc Auto-fill
+    private val _isSearchingAPI = MutableStateFlow(false)
+    val isSearchingAPI: StateFlow<Boolean> = _isSearchingAPI.asStateFlow()
+
+    // Inject UseCase vào ViewModel (thông qua Hilt/Dagger)
+    fun searchWordToAutoFill(query: String, onResult: (Word?) -> Unit) {
+        viewModelScope.launch {
+            _isSearchingAPI.value = true
+            // Gọi UseCase
+            val wordData = autoFillWordUseCase(query)
+            _isSearchingAPI.value = false
+
+            onResult(wordData)
+        }
+    }
 
     fun searchDecks(query: String) {
         // Mock search
