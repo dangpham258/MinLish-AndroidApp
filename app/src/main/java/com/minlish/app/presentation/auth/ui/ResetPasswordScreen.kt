@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.minlish.app.presentation.auth.viewmodel.AuthViewModel
-import com.minlish.app.ui_components.theme.*
+import com.minlish.app.presentation.common.theme.*
 import kotlinx.coroutines.launch
 
 private const val CORNER_RADIUS = 16
@@ -37,7 +37,7 @@ private const val CORNER_RADIUS = 16
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResetPasswordScreen(
-    oobCode: String, // Code từ deep link
+    oobCode: String,
     onResetSuccess: () -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()

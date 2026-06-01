@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.minlish.app.presentation.auth.viewmodel.AuthViewModel
-import com.minlish.app.ui_components.theme.*
+import com.minlish.app.presentation.common.theme.*
 import kotlinx.coroutines.flow.collectLatest
 
 private const val CORNER_RADIUS_VALUE = 16

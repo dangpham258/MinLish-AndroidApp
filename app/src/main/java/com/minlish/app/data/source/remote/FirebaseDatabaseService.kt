@@ -1,13 +1,13 @@
-package com.minlish.app.data.auth.datasource
+package com.minlish.app.data.source.remote
 
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.minlish.app.domain.auth.model.Account
-import com.minlish.app.domain.auth.model.User
-import com.minlish.app.domain.auth.model.UserProfile
-import com.minlish.app.domain.auth.model.UserSetting
+import com.minlish.app.domain.model.Account
+import com.minlish.app.domain.model.User
+import com.minlish.app.domain.model.UserProfile
+import com.minlish.app.domain.model.UserSetting
 import com.minlish.app.domain.model.enumration.InitialLevel
 import com.minlish.app.domain.model.enumration.LearningGoal
 import kotlinx.coroutines.channels.awaitClose

@@ -1,9 +1,10 @@
-package com.minlish.app.data.auth.repository
+package com.minlish.app.data.repository
 
-import com.minlish.app.data.auth.datasource.FirebaseAuthApi
-import com.minlish.app.data.auth.datasource.FirebaseDatabaseService
-import com.minlish.app.domain.auth.model.User
-import com.minlish.app.domain.auth.repository.AuthRepository
+import com.minlish.app.data.UserSession
+import com.minlish.app.data.source.remote.FirebaseAuthApi
+import com.minlish.app.data.source.remote.FirebaseDatabaseService
+import com.minlish.app.domain.model.User
+import com.minlish.app.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +12,8 @@ import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuthApi: FirebaseAuthApi,
-    private val firebaseDatabaseService: FirebaseDatabaseService
+    private val firebaseDatabaseService: FirebaseDatabaseService,
+    private val userSession: UserSession
 ) : AuthRepository {
 
     private val _currentUser = MutableStateFlow<User?>(null)
@@ -21,6 +23,8 @@ class AuthRepositoryImpl @Inject constructor(
 
         if (result.isSuccess) {
             val user = result.getOrNull()!!
+            // Cap nhat session
+            userSession.refreshSession()
             // Dam bao user co day du cac field trong DB
             firebaseDatabaseService.createUserIfNotExists(
                 uid = user.id,
@@ -38,6 +42,8 @@ class AuthRepositoryImpl @Inject constructor(
 
         if (result.isSuccess) {
             val user = result.getOrNull()!!
+            // Cap nhat session
+            userSession.refreshSession()
             firebaseDatabaseService.createUserIfNotExists(
                 uid = user.id,
                 name = name,
@@ -54,6 +60,8 @@ class AuthRepositoryImpl @Inject constructor(
 
         if (result.isSuccess) {
             val user = result.getOrNull()!!
+            // Cap nhat session
+            userSession.refreshSession()
             firebaseDatabaseService.createUserIfNotExists(
                 uid = user.id,
                 name = user.name,
@@ -67,6 +75,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun logout() {
         firebaseAuthApi.signOut()
+        userSession.clearSession()
         _currentUser.value = null
     }
 

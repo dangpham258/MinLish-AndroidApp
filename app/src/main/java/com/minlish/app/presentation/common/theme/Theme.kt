@@ -1,4 +1,4 @@
-package com.minlish.app.ui_components.theme
+package com.minlish.app.presentation.common.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

@@ -1,7 +1,7 @@
-package com.minlish.app.domain.auth.usecase
+package com.minlish.app.domain.usecase
 
-import com.minlish.app.domain.auth.model.User
-import com.minlish.app.domain.auth.repository.AuthRepository
+import com.minlish.app.domain.model.User
+import com.minlish.app.domain.repository.AuthRepository
 import javax.inject.Inject
 
 class LoginUseCase @Inject constructor(

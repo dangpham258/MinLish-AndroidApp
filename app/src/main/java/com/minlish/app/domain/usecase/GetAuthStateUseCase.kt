@@ -1,4 +1,4 @@
-package com.minlish.app.domain.auth.usecase
+package com.minlish.app.domain.usecase
 
 import com.google.firebase.auth.FirebaseAuth
 import javax.inject.Inject

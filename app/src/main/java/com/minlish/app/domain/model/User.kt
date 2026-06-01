@@ -1,4 +1,4 @@
-package com.minlish.app.domain.auth.model
+package com.minlish.app.domain.model
 
 import com.minlish.app.domain.model.enumration.InitialLevel
 import com.minlish.app.domain.model.enumration.LearningGoal

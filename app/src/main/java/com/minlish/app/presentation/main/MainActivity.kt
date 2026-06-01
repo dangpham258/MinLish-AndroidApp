@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import com.minlish.app.presentation.navigation.AppNavHost
-import com.minlish.app.ui_components.theme.MinLishAppTheme
+import com.minlish.app.presentation.common.navigation.AppNavHost
+import com.minlish.app.presentation.common.theme.MinLishAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

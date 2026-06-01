@@ -1,7 +1,6 @@
-package com.minlish.app.presentation.navigation
+package com.minlish.app.presentation.common.navigation
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState

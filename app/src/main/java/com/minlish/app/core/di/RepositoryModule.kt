@@ -1,7 +1,7 @@
-package com.minlish.app.di
+package com.minlish.app.core.di
 
-import com.minlish.app.data.auth.repository.AuthRepositoryImpl
-import com.minlish.app.domain.auth.repository.AuthRepository
+import com.minlish.app.data.repository.AuthRepositoryImpl
+import com.minlish.app.domain.repository.AuthRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

@@ -2,11 +2,11 @@ package com.minlish.app.presentation.auth.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minlish.app.domain.auth.repository.AuthRepository
-import com.minlish.app.domain.auth.usecase.GetAuthStateUseCase
-import com.minlish.app.domain.auth.usecase.LoginUseCase
-import com.minlish.app.domain.auth.usecase.SignUpUseCase
-import com.minlish.app.util.GoogleAuthManager
+import com.minlish.app.domain.repository.AuthRepository
+import com.minlish.app.domain.usecase.GetAuthStateUseCase
+import com.minlish.app.domain.usecase.LoginUseCase
+import com.minlish.app.domain.usecase.SignUpUseCase
+import com.minlish.app.core.util.GoogleAuthManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

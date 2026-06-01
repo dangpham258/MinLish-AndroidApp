@@ -1,9 +1,9 @@
-package com.minlish.app.data.auth.datasource
+package com.minlish.app.data.source.remote
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.minlish.app.domain.auth.model.Account
-import com.minlish.app.domain.auth.model.User
+import com.minlish.app.domain.model.Account
+import com.minlish.app.domain.model.User
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext

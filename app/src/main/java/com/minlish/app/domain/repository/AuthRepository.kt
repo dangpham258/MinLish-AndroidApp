@@ -1,6 +1,6 @@
-package com.minlish.app.domain.auth.repository
+package com.minlish.app.domain.repository
 
-import com.minlish.app.domain.auth.model.User
+import com.minlish.app.domain.model.User
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {
