@@ -22,7 +22,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.minlish.app.domain.model.Word
+import android.content.Context
+import android.media.MediaPlayer
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import com.minlish.app.domain.model.Vocabulary
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URL
 import com.minlish.app.presentation.common.component.BunnyAppBar
 import com.minlish.app.presentation.common.component.BunnyBottomNavBar
 import com.minlish.app.presentation.common.component.BunnyTab
@@ -215,7 +226,8 @@ fun LearningModeItem(title: String, icon: androidx.compose.ui.graphics.vector.Im
 }
 
 @Composable
-fun WordCardItem(word: Word, onClick: () -> Unit) {
+fun WordCardItem(word: Vocabulary, onClick: () -> Unit) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
@@ -229,12 +241,59 @@ fun WordCardItem(word: Word, onClick: () -> Unit) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(word.phonetic, style = DeckTypography.bodyMd, color = DeckColors.OnSurface)
                 }
-                Icon(Icons.Default.VolumeUp, contentDescription = "Play Audio", tint = DeckColors.PrimaryContainer)
+                Icon(
+                    Icons.Default.VolumeUp, 
+                    contentDescription = "Play Audio", 
+                    tint = DeckColors.PrimaryContainer,
+                    modifier = Modifier.clickable { playAudio(context, word.soundUrl) }
+                )
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(word.partOfSpeech, style = DeckTypography.labelLg, color = DeckColors.Outline, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
             Spacer(modifier = Modifier.height(8.dp))
             Text(word.englishDefinition, style = DeckTypography.bodyMd, color = DeckColors.OnSurface)
+        }
+    }
+}
+
+fun playAudio(context: Context, url: String) {
+    if (url.isBlank()) {
+        Toast.makeText(context, "No audio available", Toast.LENGTH_SHORT).show()
+        return
+    }
+
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val fileName = url.substringAfterLast("/").replace(Regex("[^a-zA-Z0-9.-]"), "_")
+            val cacheDir = File(context.cacheDir, "audio")
+            if (!cacheDir.exists()) {
+                cacheDir.mkdirs()
+            }
+            val audioFile = File(cacheDir, fileName)
+
+            if (!audioFile.exists()) {
+                // Download
+                URL(url).openStream().use { input ->
+                    FileOutputStream(audioFile).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            }
+
+            withContext(Dispatchers.Main) {
+                val mediaPlayer = MediaPlayer()
+                mediaPlayer.setDataSource(audioFile.absolutePath)
+                mediaPlayer.prepare()
+                mediaPlayer.start()
+                mediaPlayer.setOnCompletionListener {
+                    it.release()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Failed to play audio", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

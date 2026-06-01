@@ -2,7 +2,7 @@ package com.minlish.app.presentation.deck
 
 import androidx.lifecycle.ViewModel
 import com.minlish.app.domain.model.Deck
-import com.minlish.app.domain.model.Word
+import com.minlish.app.domain.model.Vocabulary
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,19 +30,19 @@ class DeckViewModel @Inject constructor(
     private val _currentDeck = MutableStateFlow<Deck?>(null)
     val currentDeck: StateFlow<Deck?> = _currentDeck.asStateFlow()
 
-    private val _words = MutableStateFlow<List<Word>>(emptyList())
-    val words: StateFlow<List<Word>> = _words.asStateFlow()
+    private val _words = MutableStateFlow<List<Vocabulary>>(emptyList())
+    val words: StateFlow<List<Vocabulary>> = _words.asStateFlow()
 
     // Thêm state để quản lý việc Auto-fill
     private val _isSearchingAPI = MutableStateFlow(false)
     val isSearchingAPI: StateFlow<Boolean> = _isSearchingAPI.asStateFlow()
 
     // Inject UseCase vào ViewModel (thông qua Hilt/Dagger)
-    fun searchWordToAutoFill(query: String, onResult: (Word?) -> Unit) {
+    fun searchWordToAutoFill(query: String, partOfSpeech: String, onResult: (Vocabulary?) -> Unit) {
         viewModelScope.launch {
             _isSearchingAPI.value = true
             // Gọi UseCase
-            val wordData = autoFillWordUseCase(query)
+            val wordData = autoFillWordUseCase(query, partOfSpeech)
             _isSearchingAPI.value = false
 
             onResult(wordData)
@@ -57,8 +57,8 @@ class DeckViewModel @Inject constructor(
         // Mock load
         _currentDeck.value = _decks.value.find { it.id == deckId }
         _words.value = listOf(
-            Word("w1", deckId, "Abandon", "/əˈbændən/", "Verb", "To leave completely and finally", "Từ bỏ", "He abandoned his car in the snow."),
-            Word("w2", deckId, "Ability", "/əˈbɪlɪti/", "Noun", "Capacity or power to do something", "Khả năng", "She has the ability to learn quickly.")
+            Vocabulary("w1", deckId, "Abandon", "/əˈbændən/", "Verb", "", null, "To leave completely and finally", "Từ bỏ", "He abandoned his car in the snow."),
+            Vocabulary("w2", deckId, "Ability", "/əˈbɪlɪti/", "Noun", "", null, "Capacity or power to do something", "Khả năng", "She has the ability to learn quickly.")
         )
     }
 
@@ -70,11 +70,11 @@ class DeckViewModel @Inject constructor(
         // Mock delete
     }
 
-    fun addWord(word: Word) {
+    fun addWord(word: Vocabulary) {
         // Mock add word
     }
 
-    fun updateWord(word: Word) {
+    fun updateWord(word: Vocabulary) {
         // Mock update word
     }
 
