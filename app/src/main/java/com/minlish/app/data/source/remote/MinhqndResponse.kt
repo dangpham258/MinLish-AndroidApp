@@ -16,5 +16,6 @@ data class MinhqndResult(
 data class MinhqndMeaning(
     val definition: String,
     @SerializedName("definition_lang") val definitionLang: String,
-    val example: String?
+    val example: String?,
+    val pos: String?
 )

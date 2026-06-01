@@ -27,7 +27,9 @@ class WordRepositoryImpl(
         val freeDictDeferred = async {
             runCatching { 
                 val response = freeDictApi.getWordInfo(wordQuery)
-                if (response.isSuccessful) response.body()?.firstOrNull() else null
+                // Lấy TOÀN BỘ danh sách entries, không chỉ entry đầu tiên
+                // VD: "main" trả về 4 entries, noun nằm ở entry thứ 2/3
+                if (response.isSuccessful) response.body() else null
             }.getOrNull()
         }
         val minhqndDeferred = async {
@@ -41,7 +43,7 @@ class WordRepositoryImpl(
         val minhqndResult = minhqndDeferred.await()
 
         // Nếu cả 2 đều lỗi/không có dữ liệu thì trả về null
-        if (freeDictResult == null && minhqndResult == null) return@withContext null
+        if (freeDictResult.isNullOrEmpty() && minhqndResult == null) return@withContext null
 
         // 3. Mapping dữ liệu API sang Domain Model
         mapToVocabularyDomain(wordQuery, partOfSpeech, freeDictResult, minhqndResult)
