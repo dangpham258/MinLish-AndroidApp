@@ -1,6 +1,6 @@
 package com.minlish.app.domain.usecase
 
-import com.minlish.app.domain.model.EaseFactor
+import com.minlish.app.domain.model.enumration.EaseFactor
 import com.minlish.app.domain.model.UserVocabularyState
 import java.util.Date
 import kotlin.math.roundToInt
@@ -16,13 +16,13 @@ class CalculateSrsUseCase {
         val newIntervalDays: Double
         
         val multiplier = when (buttonPressed) {
-            EaseFactor.Again -> 0.0
-            EaseFactor.Hard -> 1.2
-            EaseFactor.Good -> 1.5
-            EaseFactor.Easy -> 2.0
+            EaseFactor.AGAIN -> 0.0
+            EaseFactor.HARD -> 1.2
+            EaseFactor.GOOD -> 1.5
+            EaseFactor.EASY -> 2.0
         }
 
-        if (buttonPressed == EaseFactor.Again) {
+        if (buttonPressed == EaseFactor.AGAIN) {
             newRepetition = 0
             newIntervalDays = 1.0
         } else {
@@ -51,6 +51,6 @@ class CalculateSrsUseCase {
     ): String {
         val nextState = invoke(currentState, button)
         val days = nextState.interval.roundToInt()
-        return if (button == EaseFactor.Again) "1 ngày" else "$days ngày"
+        return if (button == EaseFactor.AGAIN) "1 ngày" else "$days ngày"
     }
 }

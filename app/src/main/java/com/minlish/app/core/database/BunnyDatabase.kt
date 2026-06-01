@@ -4,27 +4,18 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.minlish.app.data.source.local.*
+import com.minlish.app.data.source.local.DeckProgressEntity
+import com.minlish.app.data.source.local.ProgressDao
 
 @Database(
     entities = [
-        UserEntity::class,
-        AccountEntity::class,
-        UserProfileEntity::class,
-        UserSettingEntity::class,
-        DeckEntity::class,
-        VocabularyEntity::class,
-        DeckVocabularyEntity::class,
-        UserVocabularyStateEntity::class,
-        ReviewHistoryEntity::class,
-        NotificationEntity::class,
-        UserStatsEntity::class
+        DeckProgressEntity::class
     ],
-    version = 4,
+    version = 6,
     exportSchema = false
 )
 abstract class BunnyDatabase : RoomDatabase() {
-    abstract fun bunnyDao(): BunnyDao
+    abstract fun progressDao(): ProgressDao
 
     companion object {
         @Volatile

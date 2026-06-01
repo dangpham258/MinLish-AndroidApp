@@ -41,13 +41,16 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.minlish.app.core.utils.AudioPlayer
 import com.minlish.app.domain.model.Vocabulary
+import com.minlish.app.presentation.common.BunnyLoadingScreen
 import com.minlish.app.presentation.common.component.BunnyAppBar
 import com.minlish.app.presentation.common.component.BunnyBottomNavBar
 import com.minlish.app.presentation.common.component.BunnyTab
@@ -67,6 +70,16 @@ fun ContextScreen(
     val currentIndex by viewModel.currentCardIndex.collectAsState()
     val isCompleted by viewModel.isCompleted.collectAsState()
     val learnedCount by viewModel.learnedCount.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val loadingProgress by viewModel.loadingProgress.collectAsState()
+
+    if (isLoading) {
+        BunnyLoadingScreen(
+            message = "Đang chuẩn bị không gian học...",
+            progress = loadingProgress
+        )
+        return
+    }
 
     val currentVocab = if (items.isNotEmpty() && currentIndex < items.size) {
         items[currentIndex]
@@ -271,57 +284,6 @@ fun ContextScreen(
                             )
                         }
 
-                        // 2. Mascot Illustration Section
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1.77f)
-                                .clip(RoundedCornerShape(24.dp))
-                                .border(
-                                    1.dp,
-                                    ContextScreenColors.SkyBlue.copy(alpha = 0.4f),
-                                    RoundedCornerShape(24.dp)
-                                )
-                        ) {
-                            Image(
-                                painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                                contentDescription = "Mascot Illustration",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        Brush.verticalGradient(
-                                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.2f))
-                                        )
-                                    )
-                            )
-                            Row(
-                                modifier = Modifier
-                                    .align(Alignment.BottomStart)
-                                    .padding(16.dp)
-                                    .background(Color.White.copy(alpha = 0.95f), CircleShape)
-                                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.AutoStories,
-                                    contentDescription = null,
-                                    tint = ContextScreenColors.Primary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = "Story Mode Active",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = BunnyColors.OnSurface
-                                )
-                            }
-                        }
-
                         // 3. Word Card (Bento Style)
                         Column(
                             modifier = Modifier
@@ -354,11 +316,39 @@ fun ContextScreen(
                                 letterSpacing = (-0.5).sp
                             )
 
-                            Text(
-                                text = vocab.pronunciation,
-                                color = ContextScreenColors.OnSurfaceVariant.copy(alpha = 0.7f),
-                                fontWeight = FontWeight.Medium
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = vocab.pronunciation,
+                                    color = ContextScreenColors.OnSurfaceVariant.copy(alpha = 0.7f),
+                                    fontWeight = FontWeight.Medium
+                                )
+                                if (vocab.voiceUrl.isNotBlank()) {
+                                    IconButton(
+                                        onClick = { AudioPlayer.play(vocab.voiceUrl) },
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .background(ContextScreenColors.Primary, CircleShape)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                            contentDescription = "Pronounce",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (vocab.wordType.isNotBlank()) {
+                                Text(
+                                    text = vocab.wordType,
+                                    style = BunnyTypography.LabelMd.copy(fontStyle = FontStyle.Italic),
+                                    color = ContextScreenColors.OnSurfaceVariant.copy(alpha = 0.6f)
+                                )
+                            }
                         }
 
                         // 4. Context Area
@@ -445,91 +435,13 @@ fun HighlightedText(text: String, highlightWord: String) {
     )
 }
 
-@Composable
-fun BottomNavBar() {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(16.dp, shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-        color = Color.White
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(vertical = 12.dp, horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Tab 1: Lessons (Active)
-            Row(
-                modifier = Modifier
-                    .background(ContextScreenColors.SkyBlue, CircleShape)
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Icon(
-                    Icons.Default.School,
-                    contentDescription = "Lessons",
-                    tint = ContextScreenColors.Primary
-                )
-                Text(
-                    text = "Lessons",
-                    fontWeight = FontWeight.Bold,
-                    color = ContextScreenColors.Primary,
-                    fontSize = 14.sp
-                )
-            }
-
-            // Tab 2: Stats
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .clickable { /* Điều hướng sang màn hình thống kê */ }
-                    .padding(horizontal = 16.dp)
-            ) {
-                Icon(
-                    Icons.Default.Leaderboard,
-                    contentDescription = "Stats",
-                    tint = ContextScreenColors.OnSurfaceVariant.copy(alpha = 0.6f)
-                )
-                Text(
-                    text = "Stats",
-                    color = ContextScreenColors.OnSurfaceVariant.copy(alpha = 0.6f),
-                    fontSize = 12.sp
-                )
-            }
-
-            // Tab 3: Profile
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .clickable { /* Điều hướng sang trang cá nhân */ }
-                    .padding(horizontal = 16.dp)
-            ) {
-                Icon(
-                    Icons.Default.Person,
-                    contentDescription = "Profile",
-                    tint = ContextScreenColors.OnSurfaceVariant.copy(alpha = 0.6f)
-                )
-                Text(
-                    text = "Profile",
-                    color = ContextScreenColors.OnSurfaceVariant.copy(alpha = 0.6f),
-                    fontSize = 12.sp
-                )
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
 fun ContextScreenPreview() {
     // Mock Vocabulary
     val mockVocab = Vocabulary(
-        id = 1,
+        id = "1",
         word = "Benevolent",
         pronunciation = "/bəˈnev.əl.ənt/",
         meaning = "Nhân từ, rộng lượng",
@@ -538,12 +450,10 @@ fun ContextScreenPreview() {
             "He was a benevolent old man and wouldn't hurt a fly.",
             "A benevolent organization."
         ),
-        synonyms = listOf("Kind", "Generous"),
-        antonyms = listOf("Cruel", "Mean"),
-        relatedWords = emptyList(),
         note = "Academic word",
-        imageUrl = "",
-        wordType = "Adjective"
+        pos = "Adjective",
+        level = "b2",
+        voiceUrl = ""
     )
 
     // Simplified UI for Preview to avoid ViewModel complex setup
@@ -582,35 +492,6 @@ fun ContextScreenPreview() {
                     color = BunnyColors.OnSurface,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 24.sp
-                )
-            }
-
-            // 2. Mascot Illustration Section
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1.77f)
-                    .clip(RoundedCornerShape(24.dp))
-                    .border(
-                        1.dp,
-                        ContextScreenColors.SkyBlue.copy(alpha = 0.4f),
-                        RoundedCornerShape(24.dp)
-                    )
-            ) {
-                Image(
-                    painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                    contentDescription = "Mascot Illustration",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.2f))
-                            )
-                        )
                 )
             }
 
@@ -655,18 +536,6 @@ fun ContextScreenPreview() {
                         color = ContextScreenColors.OnSurfaceVariant.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Medium
                     )
-                    IconButton(
-                        onClick = {},
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(ContextScreenColors.Primary, CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = "Pronounce",
-                            tint = Color.White
-                        )
-                    }
                 }
             }
 

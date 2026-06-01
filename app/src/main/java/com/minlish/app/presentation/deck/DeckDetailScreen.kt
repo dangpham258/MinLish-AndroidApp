@@ -1,5 +1,8 @@
 package com.minlish.app.presentation.deck
 
+import android.content.Context
+import android.media.MediaPlayer
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,26 +11,33 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.minlish.app.domain.model.Vocabulary
+import com.minlish.app.presentation.common.component.BunnyAppBar
+import com.minlish.app.presentation.common.component.BunnyBottomNavBar
+import com.minlish.app.presentation.common.component.BunnyTab
 import com.minlish.app.ui.theme.DeckColors
 import com.minlish.app.ui.theme.DeckTypography
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URL
 
 @Composable
 fun DeckDetailScreen(
@@ -35,7 +45,7 @@ fun DeckDetailScreen(
     deckId: String,
     onNavigateBack: () -> Unit,
     onNavigateToAddWord: (String) -> Unit,
-    onNavigateToUpdateWord: (String, Int) -> Unit,
+    onNavigateToUpdateWord: (String, String) -> Unit,
     onNavigateToFlashcard: (String) -> Unit,
     onNavigateToSRS: (String) -> Unit,
     onNavigateToContext: (String) -> Unit
@@ -47,170 +57,145 @@ fun DeckDetailScreen(
     val deck by viewModel.currentDeck.collectAsState()
     val words by viewModel.words.collectAsState()
 
-    if (deck == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = DeckColors.Primary)
+    Scaffold(
+        containerColor = DeckColors.Background,
+        topBar = { BunnyAppBar(title = "Bunny English", onBackClick = onNavigateBack) },
+        bottomBar = { BunnyBottomNavBar(selectedTab = BunnyTab.LESSONS, onTabSelected = {}) },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { onNavigateToAddWord(deckId) },
+                containerColor = DeckColors.Primary,
+                contentColor = DeckColors.SurfaceContainerLowest,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Word")
+            }
         }
-    } else {
-        Scaffold(
-            containerColor = DeckColors.Background,
-            topBar = {
-                Box(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp)) {
-                    IconButton(onClick = onNavigateBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = DeckColors.Primary)
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.padding(padding).fillMaxSize().padding(horizontal = 20.dp),
+            contentPadding = PaddingValues(bottom = 80.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            item {
+                deck?.let { d ->
+                    Card(
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = DeckColors.PrimaryContainer),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(24.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.background(DeckColors.SecondaryContainer, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 4.dp)) {
+                                    Text("Academic", style = DeckTypography.labelLg, color = DeckColors.OnSecondaryContainer)
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Icon(Icons.Default.MenuBook, contentDescription = null, tint = DeckColors.OnPrimaryContainer, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("${words.size} Words", style = DeckTypography.labelLg, color = DeckColors.OnPrimaryContainer)
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            // Dùng d.deckName thay vì d.name
+                            Text(d.deckName, style = DeckTypography.headlineLg, color = DeckColors.OnPrimaryContainer)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(d.description, style = DeckTypography.bodyMd, color = DeckColors.OnPrimaryContainer)
+                        }
                     }
-                    Text(
-                        text = "Bunny English",
-                        style = DeckTypography.headlineMd,
-                        color = DeckColors.Primary,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = { onNavigateToAddWord(deckId) },
-                    containerColor = DeckColors.Primary,
-                    contentColor = DeckColors.SurfaceContainerLowest,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Word")
                 }
             }
-        ) { padding ->
-            LazyColumn(
-                modifier = Modifier
-                    .padding(padding)
-                    .fillMaxSize()
-                    .padding(horizontal = 20.dp),
-                contentPadding = PaddingValues(bottom = 80.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                item {
-                    deck?.let { d ->
+
+            item {
+                deck?.let { d ->
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         Card(
-                            shape = RoundedCornerShape(24.dp),
-                            colors = CardDefaults.cardColors(containerColor = DeckColors.PrimaryContainer),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = DeckColors.SurfaceContainerLowest),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
-                            Column(modifier = Modifier.padding(24.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .background(DeckColors.SecondaryContainer, RoundedCornerShape(12.dp))
-                                            .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    ) {
-                                        Text("Academic", style = DeckTypography.labelLg, color = DeckColors.OnSecondaryContainer)
-                                    }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, tint = DeckColors.OnPrimaryContainer, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("${d.totalWords} Words", style = DeckTypography.labelLg, color = DeckColors.OnPrimaryContainer)
+                            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.size(40.dp).background(DeckColors.SecondaryContainer, CircleShape), contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = DeckColors.Secondary)
                                 }
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(d.deckName, style = DeckTypography.headlineLg, color = DeckColors.OnPrimaryContainer)
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    d.description,
-                                    style = DeckTypography.bodyMd,
-                                    color = DeckColors.OnPrimaryContainer
-                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text("Learned", style = DeckTypography.labelLg, color = DeckColors.OnSurface)
+                                    Text("0/${words.size}", style = DeckTypography.headlineMd, color = DeckColors.Primary)
+                                }
                             }
                         }
-                    }
-                }
 
-                item {
-                    deck?.let { d ->
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Card(
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = DeckColors.SurfaceContainerLowest),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                            ) {
-                                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    Box(modifier = Modifier.size(40.dp).background(DeckColors.SecondaryContainer, CircleShape), contentAlignment = Alignment.Center) {
-                                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = DeckColors.Secondary)
-                                    }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Text("Learned", style = DeckTypography.labelLg, color = DeckColors.OnSurface)
-                                        Text("${d.learned}/${d.totalWords}", style = DeckTypography.headlineMd, color = DeckColors.Primary)
-                                    }
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = DeckColors.SurfaceContainerLowest),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.size(40.dp).background(DeckColors.TertiaryContainer, CircleShape), contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Bolt, contentDescription = null, tint = DeckColors.TertiaryContainer)
                                 }
-                            }
-                            
-                            Card(
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = DeckColors.SurfaceContainerLowest),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                            ) {
-                                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    Box(modifier = Modifier.size(40.dp).background(DeckColors.TertiaryContainer, CircleShape), contentAlignment = Alignment.Center) {
-                                        Icon(Icons.Default.Bolt, contentDescription = null, tint = DeckColors.OnTertiaryContainer)
-                                    }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Text("Streak", style = DeckTypography.labelLg, color = DeckColors.OnSurface)
-                                        Text("${d.streak} Days", style = DeckTypography.headlineMd, color = DeckColors.OnTertiaryContainer)
-                                    }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text("Streak", style = DeckTypography.labelLg, color = DeckColors.OnSurface)
+                                    Text("0 Days", style = DeckTypography.headlineMd, color = DeckColors.OnTertiaryContainer)
                                 }
                             }
                         }
                     }
                 }
+            }
 
-                item {
-                    Text("Learning Modes", style = DeckTypography.headlineMd, color = DeckColors.OnSurface)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        LearningModeItem(
-                            title = "Flashcard",
-                            icon = Icons.Default.PlayArrow,
-                            bgColor = DeckColors.PrimaryContainer,
-                            modifier = Modifier.weight(1f),
-                            onClick = { onNavigateToFlashcard(deckId) }
-                        )
-                        LearningModeItem(
-                            title = "Spaced Repetition",
-                            icon = Icons.Default.Refresh,
-                            bgColor = DeckColors.SecondaryContainer,
-                            modifier = Modifier.weight(1f),
-                            onClick = { onNavigateToSRS(deckId) }
-                        )
-                        LearningModeItem(
-                            title = "Context-based learning",
-                            icon = Icons.AutoMirrored.Filled.MenuBook,
-                            bgColor = DeckColors.TertiaryContainer,
-                            modifier = Modifier.weight(1f),
-                            onClick = { onNavigateToContext(deckId) }
-                        )
-                    }
-                }
-
-                item {
-                    Text("Vocabulary List", style = DeckTypography.headlineMd, color = DeckColors.OnSurface)
-                }
-
-                items(words) { word ->
-                    WordCardItem(
-                        word = word,
-                        onClick = { onNavigateToUpdateWord(deckId, word.id) }
+            item {
+                Text("Learning Modes", style = DeckTypography.headlineMd, color = DeckColors.OnSurface)
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    LearningModeItem(
+                        title = "Flashcard", 
+                        icon = Icons.Default.PlayArrow, 
+                        bgColor = DeckColors.PrimaryContainer, 
+                        modifier = Modifier.weight(1f),
+                        onClick = { onNavigateToFlashcard(deckId) }
+                    )
+                    LearningModeItem(
+                        title = "Spaced Repetition", 
+                        icon = Icons.Default.Refresh, 
+                        bgColor = DeckColors.SecondaryContainer, 
+                        modifier = Modifier.weight(1f),
+                        onClick = { onNavigateToSRS(deckId) }
+                    )
+                    LearningModeItem(
+                        title = "Context-based", 
+                        icon = Icons.Default.MenuBook, 
+                        bgColor = DeckColors.TertiaryContainer, 
+                        modifier = Modifier.weight(1f),
+                        onClick = { onNavigateToContext(deckId) }
                     )
                 }
+            }
+
+            item {
+                Text("Vocabulary List", style = DeckTypography.headlineMd, color = DeckColors.OnSurface)
+            }
+
+            items(words) { word ->
+                WordCardItem(word = word, onClick = { onNavigateToUpdateWord(deckId, word.id) })
             }
         }
     }
 }
 
 @Composable
-fun LearningModeItem(title: String, icon: ImageVector, bgColor: Color, modifier: Modifier, onClick: () -> Unit) {
+fun LearningModeItem(
+    title: String, 
+    icon: androidx.compose.ui.graphics.vector.ImageVector, 
+    bgColor: Color, 
+    modifier: Modifier,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = modifier.aspectRatio(0.85f).clickable { onClick() },
+        modifier = modifier.aspectRatio(0.85f),
+        onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = bgColor.copy(alpha = 0.5f))
     ) {
@@ -219,20 +204,18 @@ fun LearningModeItem(title: String, icon: ImageVector, bgColor: Color, modifier:
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Box(
-                modifier = Modifier.size(48.dp).background(bgColor, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(modifier = Modifier.size(48.dp).background(bgColor, CircleShape), contentAlignment = Alignment.Center) {
                 Icon(icon, contentDescription = null, tint = DeckColors.Primary)
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Text(title, style = DeckTypography.labelMd, color = DeckColors.OnSurface, textAlign = TextAlign.Center)
+            Text(title, style = DeckTypography.labelMd, color = DeckColors.OnSurface, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
     }
 }
 
 @Composable
 fun WordCardItem(word: Vocabulary, onClick: () -> Unit) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
@@ -244,14 +227,58 @@ fun WordCardItem(word: Vocabulary, onClick: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(word.word, style = DeckTypography.titleLg, color = DeckColors.Primary)
                     Spacer(modifier = Modifier.width(8.dp))
+                    // Sửa word.phonetic thành word.pronunciation
                     Text(word.pronunciation, style = DeckTypography.bodyMd, color = DeckColors.OnSurface)
                 }
-                Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Play Audio", tint = DeckColors.PrimaryContainer)
+                Icon(
+                    Icons.Default.VolumeUp,
+                    contentDescription = "Play Audio",
+                    tint = DeckColors.PrimaryContainer,
+                    // Sửa word.soundUrl thành word.voiceUrl
+                    modifier = Modifier.clickable { playAudio(context, word.voiceUrl) }
+                )
             }
             Spacer(modifier = Modifier.height(4.dp))
-            Text(word.wordType, style = DeckTypography.labelLg, color = DeckColors.Outline, fontStyle = FontStyle.Italic)
+            // Sửa word.partOfSpeech thành word.pos
+            Text(word.pos, style = DeckTypography.labelLg, color = DeckColors.Outline, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(word.meaning, style = DeckTypography.bodyMd, color = DeckColors.OnSurface)
+            // Sửa word.englishDefinition thành word.descriptionEnglish
+            Text(word.descriptionEnglish, style = DeckTypography.bodyMd, color = DeckColors.OnSurface)
+        }
+    }
+}
+
+fun playAudio(context: Context, url: String) {
+    if (url.isBlank()) {
+        Toast.makeText(context, "No audio available", Toast.LENGTH_SHORT).show()
+        return
+    }
+
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val fileName = url.substringAfterLast("/").replace(Regex("[^a-zA-Z0-9.-]"), "_")
+            val cacheDir = File(context.cacheDir, "audio")
+            if (!cacheDir.exists()) cacheDir.mkdirs()
+            val audioFile = File(cacheDir, fileName)
+
+            if (!audioFile.exists()) {
+                URL(url).openStream().use { input ->
+                    FileOutputStream(audioFile).use { output -> input.copyTo(output) }
+                }
+            }
+
+            withContext(Dispatchers.Main) {
+                val mediaPlayer = MediaPlayer()
+                mediaPlayer.setDataSource(audioFile.absolutePath)
+                mediaPlayer.prepare()
+                mediaPlayer.start()
+                mediaPlayer.setOnCompletionListener { it.release() }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Failed to play audio", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

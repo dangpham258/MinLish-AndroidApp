@@ -7,11 +7,7 @@ plugins {
 
 android {
     namespace = "com.minlish.app"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.minlish.app"
@@ -49,6 +45,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.collection)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -59,11 +56,9 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.material3:material3-adaptive-navigation-suite-android:1.0.0-alpha07")
-    implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.8.8")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.8")
     implementation("io.coil-kt:coil-compose:2.6.0")
-    implementation("androidx.core:core-ktx:1.13.1")
     
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
@@ -71,5 +66,12 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.database)
     implementation(libs.firebase.analytics)
+    implementation(libs.lottie.compose)
+    
+    // Explicitly add these to resolve NoSuchFieldError and coroutine support
+    implementation("com.google.android.gms:play-services-measurement-sdk:22.2.0")
+    implementation("com.google.android.gms:play-services-basement:18.5.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.1")
 }

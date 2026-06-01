@@ -1,26 +1,27 @@
 package com.minlish.app.domain.repository
 
 import com.minlish.app.domain.model.*
+import com.minlish.app.domain.model.enumration.*
 import kotlinx.coroutines.flow.Flow
 
 interface BunnyRepository {
     // Decks
     fun getDecks(): Flow<List<Deck>>
     suspend fun insertDeck(deck: Deck): Long
-    suspend fun getDeckById(deckId: Int): Deck?
-    fun getDeckByIdFlow(deckId: Int): Flow<Deck?>
+    suspend fun getDeckById(deckId: String): Deck?
+    fun getDeckByIdFlow(deckId: String): Flow<Deck?>
 
     // Vocabulary
-    fun getVocabularyByDeck(deckId: Int): Flow<List<Vocabulary>>
-    fun getVocabularyById(id: Int): Flow<Vocabulary?>
+    fun getVocabularyByDeck(deckId: String, vocabularyIds: List<String>): Flow<List<Vocabulary>>
+    fun getVocabularyById(id: String): Flow<Vocabulary?>
     suspend fun insertVocabulary(vocabulary: Vocabulary): Long
-    suspend fun getVocabularyByIdDirect(id: Int): Vocabulary?
+    suspend fun getVocabularyByIdDirect(id: String): Vocabulary?
 
     // Spaced Repetition States (SRS)
     fun getActiveUserVocabularyStates(): Flow<List<UserVocabularyState>>
-    fun getVocabularyDueForReview(currentTime: Long, deckId: Int? = null): Flow<List<Vocabulary>>
-    fun getNewVocabularyForLearning(deckId: Int? = null, limit: Int = 10): Flow<List<Vocabulary>>
-    suspend fun getUserVocabularyState(vocabularyId: Int): UserVocabularyState?
+    fun getVocabularyDueForReview(currentTime: Long, deckId: String? = null): Flow<List<Vocabulary>>
+    fun getNewVocabularyForLearning(deckId: String? = null, limit: Int = 10): Flow<List<Vocabulary>>
+    suspend fun getUserVocabularyState(vocabularyId: String): UserVocabularyState?
     suspend fun saveUserVocabularyState(state: UserVocabularyState, previousEaseFactor: EaseFactor?)
 
     // User Profile / Settings
@@ -38,7 +39,7 @@ interface BunnyRepository {
     suspend fun incrementStreak()
 
     // Review History
-    fun getReviewHistory(vocabularyId: Int): Flow<List<ReviewHistory>>
+    fun getReviewHistory(vocabularyId: String): Flow<List<ReviewHistory>>
     suspend fun addReviewHistory(history: ReviewHistory)
 
     // Notifications
@@ -47,4 +48,6 @@ interface BunnyRepository {
 
     // Database Initialization
     suspend fun prepopulateInitialData()
+    suspend fun saveProgress(deckId: String, learnedCount: Int, totalCount: Int)
+    fun getProgress(deckId: String): Flow<Int>
 }

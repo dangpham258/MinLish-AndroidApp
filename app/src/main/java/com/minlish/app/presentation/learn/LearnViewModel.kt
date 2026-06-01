@@ -5,12 +5,13 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.minlish.app.core.di.ServiceLocator
 import com.minlish.app.domain.model.*
+import com.minlish.app.domain.model.enumration.*
 import com.minlish.app.domain.repository.BunnyRepository
 import com.minlish.app.domain.usecase.CalculateSrsUseCase
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.Date
 
@@ -28,248 +29,214 @@ open class LearnViewModel(
     private val _vocabularies = MutableStateFlow<List<Vocabulary>>(emptyList())
     open val vocabularies: StateFlow<List<Vocabulary>> = _vocabularies.asStateFlow()
 
-    // Flashcard Learning state
+    // Trạng thái Flashcard & Học tập
     private val _flashcards = MutableStateFlow<List<Vocabulary>>(emptyList())
-    open val flashcards: StateFlow<List<Vocabulary>> = _flashcards.asStateFlow()
+    val flashcards: StateFlow<List<Vocabulary>> = _flashcards.asStateFlow()
+
+    private val _dueVocabularies = MutableStateFlow<List<Vocabulary>>(emptyList())
+    val dueVocabularies: StateFlow<List<Vocabulary>> = _dueVocabularies.asStateFlow()
 
     private val _currentCardIndex = MutableStateFlow(0)
-    open val currentCardIndex: StateFlow<Int> = _currentCardIndex.asStateFlow()
-
-    private val _isCardFlipped = MutableStateFlow(false)
-    open val isCardFlipped: StateFlow<Boolean> = _isCardFlipped.asStateFlow()
-
-    // SRS Learning card states (Due review words Filtered)
-    private val _dueVocabularies = MutableStateFlow<List<Vocabulary>>(emptyList())
-    open val dueVocabularies: StateFlow<List<Vocabulary>> = _dueVocabularies.asStateFlow()
+    val currentCardIndex: StateFlow<Int> = _currentCardIndex.asStateFlow()
 
     private val _currentSrsIndex = MutableStateFlow(0)
-    open val currentSrsIndex: StateFlow<Int> = _currentSrsIndex.asStateFlow()
+    val currentSrsIndex: StateFlow<Int> = _currentSrsIndex.asStateFlow()
+
+    private val _isCardFlipped = MutableStateFlow(false)
+    val isCardFlipped: StateFlow<Boolean> = _isCardFlipped.asStateFlow()
 
     private val _isSrsCardFlipped = MutableStateFlow(false)
-    open val isSrsCardFlipped: StateFlow<Boolean> = _isSrsCardFlipped.asStateFlow()
+    val isSrsCardFlipped: StateFlow<Boolean> = _isSrsCardFlipped.asStateFlow()
 
-    // User progress stats
-    private val _learnedCount = MutableStateFlow(0)
-    open val learnedCount: StateFlow<Int> = _learnedCount.asStateFlow()
-
-    private val _maxReachedIndex = MutableStateFlow(-1)
-    private val _maxReachedSrsIndex = MutableStateFlow(-1)
-
+    // Missing properties for UI compatibility
     private val _isCompleted = MutableStateFlow(false)
-    open val isCompleted: StateFlow<Boolean> = _isCompleted.asStateFlow()
+    val isCompleted: StateFlow<Boolean> = _isCompleted.asStateFlow()
 
-    fun resetProgress() {
-        _currentCardIndex.value = 0
-        _currentSrsIndex.value = 0
-        _learnedCount.value = 0
-        _maxReachedIndex.value = -1
-        _maxReachedSrsIndex.value = -1
-        _isCompleted.value = false
-        _isCardFlipped.value = false
-        _isSrsCardFlipped.value = false
+    private val _learnedCount = MutableStateFlow(0)
+    val learnedCount: StateFlow<Int> = _learnedCount.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _loadingProgress = MutableStateFlow(0f)
+    val loadingProgress: StateFlow<Float> = _loadingProgress.asStateFlow()
+
+    private val learnedIds = mutableSetOf<String>()
+
+    init {
+        observeDecks()
     }
 
-    fun restartLearning() {
-        _currentCardIndex.value = 0
-        _currentSrsIndex.value = 0
-        _isCompleted.value = false
-        _isCardFlipped.value = false
-        _isSrsCardFlipped.value = false
-    }
-
-    fun markAsLearned(vocabularyId: Int) {
+    // THAY ĐỔI QUAN TRỌNG: Lắng nghe danh sách Deck thực tế từ Firebase truyền tải sang UI
+    private fun observeDecks() {
         viewModelScope.launch {
-            val currentState = repository.getUserVocabularyState(vocabularyId)
-            if (currentState == null) {
-                // Initial state when just viewed
-                val initialState = UserVocabularyState(
-                    userId = 1,
-                    vocabularyId = vocabularyId,
-                    interval = 0.0,
-                    repetition = 0,
-                    easeFactor = EaseFactor.Again,
-                    nextReview = Date()
-                )
-                repository.saveUserVocabularyState(initialState, null)
+            repository.getDecks().collect { deckList ->
+                _decks.value = deckList
             }
         }
     }
 
-    private val _streakDays = MutableStateFlow(0)
-    open val streakDays: StateFlow<Int> = _streakDays.asStateFlow()
-
-    init {
+    fun selectDeckById(deckId: String) {
+        _isLoading.value = true
+        _loadingProgress.value = 0.05f // Bắt đầu từ 5% để người dùng thấy có chạy ngay
+        
         viewModelScope.launch {
-            repository.prepopulateInitialData()
-            loadDecksAndSelectDefault()
-            observeStats()
-        }
-    }
-
-    private fun loadDecksAndSelectDefault() {
-        viewModelScope.launch {
-            repository.getDecks().collect { deckList ->
-                _decks.value = deckList
-                if (deckList.isNotEmpty() && _selectedDeck.value == null) {
-                    selectDeck(deckList.first())
+            // Chạy tiến độ giả lập mượt mà trong background
+            val progressJob = launch {
+                for (i in 5..90) {
+                    delay(12) 
+                    _loadingProgress.value = i / 100f
                 }
+            }
+            
+            val deck = repository.getDeckById(deckId)
+            if (deck != null) {
+                _selectedDeck.value = deck
+                resetProgress()
+                
+                repository.getVocabularyByDeck(deck.id, deck.vocabularyIds).collect { vocabList ->
+                    progressJob.cancel()
+                    
+                    // Chạy nhanh nốt phần còn lại lên 100%
+                    val current = (_loadingProgress.value * 100).toInt()
+                    for (i in current..100) {
+                        delay(4)
+                        _loadingProgress.value = i / 100f
+                    }
+                    
+                    _vocabularies.value = vocabList
+                    _flashcards.value = vocabList
+                    _dueVocabularies.value = vocabList
+                    _learnedCount.value = 0
+                    learnedIds.clear()
+                    
+                    delay(250) // Giữ 100% một chút cho cảm giác hoàn thành
+                    _isLoading.value = false
+                }
+            } else {
+                _isLoading.value = false
             }
         }
     }
 
     fun selectDeck(deck: Deck) {
         _selectedDeck.value = deck
-        viewModelScope.launch {
-            repository.incrementStreak()
-            repository.getVocabularyByDeck(deck.id).collect { list ->
-                _vocabularies.value = list
-                _flashcards.value = list.shuffled()
-                _currentCardIndex.value = 0
-                _isCardFlipped.value = false
-            }
-        }
-        observeDueVocabulary()
+        selectDeckById(deck.id)
     }
 
-    private fun observeStats() {
-        viewModelScope.launch {
-            repository.getLearnedWordsCount().collect { count ->
-                _learnedCount.value = count
-            }
-        }
-        viewModelScope.launch {
-            repository.getStreakDaysCount().collect { count ->
-                _streakDays.value = count
-            }
-        }
+    fun resetProgress() {
+        _currentCardIndex.value = 0
+        _currentSrsIndex.value = 0
+        _isCardFlipped.value = false
+        _isSrsCardFlipped.value = false
+        _isCompleted.value = false
+        _learnedCount.value = 0
+        learnedIds.clear()
     }
 
-    private fun observeDueVocabulary() {
-        viewModelScope.launch {
-            val deckId = _selectedDeck.value?.id
-            combine(
-                repository.getVocabularyDueForReview(System.currentTimeMillis(), deckId),
-                repository.getNewVocabularyForLearning(deckId, 10)
-            ) { due, new ->
-                due + new
-            }.collect { combinedList ->
-                _dueVocabularies.value = combinedList
-                if (_currentSrsIndex.value >= combinedList.size) {
-                    _currentSrsIndex.value = 0
-                }
-            }
-        }
-    }
-
-    open fun flipCard() {
+    fun flipCard() {
         _isCardFlipped.value = !_isCardFlipped.value
     }
 
-    open fun nextFlashcard() {
-        if (_flashcards.value.isNotEmpty()) {
-            if (_currentCardIndex.value > _maxReachedIndex.value) {
-                _maxReachedIndex.value = _currentCardIndex.value
-                _learnedCount.value = _maxReachedIndex.value + 1
-            }
-            
-            if (_currentCardIndex.value == _flashcards.value.size - 1) {
-                _isCompleted.value = true
-            } else {
-                _currentCardIndex.value = _currentCardIndex.value + 1
-                _isCardFlipped.value = false
-            }
-        }
-    }
-
-    open fun previousFlashcard() {
-        if (_flashcards.value.isNotEmpty()) {
-            val nextIndex = if (_currentCardIndex.value - 1 < 0) {
-                0 // Don't loop back in learn mode
-            } else {
-                _currentCardIndex.value - 1
-            }
-            _currentCardIndex.value = nextIndex
-            _isCardFlipped.value = false
-        }
-    }
-
-    open fun nextSrsCard() {
-        if (_dueVocabularies.value.isNotEmpty()) {
-            if (_currentSrsIndex.value > _maxReachedSrsIndex.value) {
-                _maxReachedSrsIndex.value = _currentSrsIndex.value
-                _learnedCount.value = _maxReachedSrsIndex.value + 1
-            }
-
-            if (_currentSrsIndex.value == _dueVocabularies.value.size - 1) {
-                _isCompleted.value = true
-            } else {
-                _currentSrsIndex.value = _currentSrsIndex.value + 1
-                _isSrsCardFlipped.value = false
-            }
-        }
-    }
-
-    open fun previousSrsCard() {
-        if (_dueVocabularies.value.isNotEmpty()) {
-            val nextIndex = if (_currentSrsIndex.value - 1 < 0) {
-                0 // Don't loop back
-            } else {
-                _currentSrsIndex.value - 1
-            }
-            _currentSrsIndex.value = nextIndex
-            _isSrsCardFlipped.value = false
-        }
-    }
-
-    open fun toggleSrsCardFlip() {
+    fun toggleSrsCardFlip() {
         _isSrsCardFlipped.value = !_isSrsCardFlipped.value
     }
 
-    open suspend fun getButtonIntervalEstimate(vocabularyId: Int, button: EaseFactor): String {
-        val existingState = repository.getUserVocabularyState(vocabularyId) ?: UserVocabularyState(
-            userId = 1,
-            vocabularyId = vocabularyId,
-            interval = 1.0,
-            repetition = 1,
-            easeFactor = EaseFactor.Good, // Đổi từ 2.5 sang Enum
-            nextReview = Date() // Đổi sang Date
-        )
-        return calculateSrsUseCase.estimateNextIntervalDays(existingState, button)
+    fun flipSrsCard() {
+        _isSrsCardFlipped.value = !_isSrsCardFlipped.value
     }
 
-    open fun submitSrsGrade(vocabularyId: Int, button: EaseFactor) {
-        viewModelScope.launch {
-            val existingState = repository.getUserVocabularyState(vocabularyId)
-            val previousEaseFactor = existingState?.easeFactor
+    fun markAsLearned(id: String) {
+        if (learnedIds.add(id)) {
+            _learnedCount.value = learnedIds.size
+            saveProgressLocally()
+        }
+    }
 
-            val stateToProcess = existingState ?: UserVocabularyState(
-                userId = 1,
-                vocabularyId = vocabularyId,
-                interval = 0.0, // Start with 0 if new
-                repetition = 0, // Start with 0 if new
-                easeFactor = EaseFactor.Again,
+    private fun saveProgressLocally() {
+        val deckId = _selectedDeck.value?.id ?: return
+        val total = _vocabularies.value.size
+        if (total == 0) return
+        
+        viewModelScope.launch {
+            repository.saveProgress(deckId, learnedIds.size, total)
+        }
+    }
+
+    fun nextFlashcard() {
+        val nextIndex = _currentCardIndex.value + 1
+        if (nextIndex < _flashcards.value.size) {
+            _currentCardIndex.value = nextIndex
+            _isCardFlipped.value = false
+        } else {
+            _isCompleted.value = true
+        }
+    }
+
+    fun previousFlashcard() {
+        if (_currentCardIndex.value > 0) {
+            _currentCardIndex.value -= 1
+            _isCardFlipped.value = false
+        }
+    }
+
+    fun nextSrsCard() {
+        val nextIndex = _currentSrsIndex.value + 1
+        if (nextIndex < _dueVocabularies.value.size) {
+            _currentSrsIndex.value = nextIndex
+            _isSrsCardFlipped.value = false
+        } else {
+            _isCompleted.value = true
+        }
+    }
+
+    fun previousSrsCard() {
+        if (_currentSrsIndex.value > 0) {
+            _currentSrsIndex.value -= 1
+            _isSrsCardFlipped.value = false
+        }
+    }
+
+    fun restartLearning() {
+        resetProgress()
+        _isCompleted.value = false
+    }
+
+    fun getButtonIntervalEstimate(vocabId: String, factor: EaseFactor): String {
+        // Có thể bổ sung logic tính toán dự kiến interval tại đây
+        return when (factor) {
+            EaseFactor.AGAIN -> "1 ngày"
+            EaseFactor.HARD -> "2 ngày"
+            EaseFactor.GOOD -> "4 ngày"
+            EaseFactor.EASY -> "7 ngày"
+        }
+    }
+
+    fun submitSrsGrade(vocabId: String, grade: EaseFactor) {
+        viewModelScope.launch {
+            val currentVocab = _dueVocabularies.value.find { it.id == vocabId } ?: return@launch
+            
+            val stateToProcess = UserVocabularyState(
+                vocabId = vocabId,
+                deckId = _selectedDeck.value?.id ?: "",
+                interval = 1.0,
+                repetition = 0,
+                easeFactor = EaseFactor.GOOD,
                 nextReview = Date()
             )
 
-            val updatedState = calculateSrsUseCase(stateToProcess, button, System.currentTimeMillis())
-            repository.saveUserVocabularyState(updatedState, previousEaseFactor)
-
-            if (button != EaseFactor.Again) {
-                repository.incrementStreak()
-            }
+            val updatedState = calculateSrsUseCase(stateToProcess, grade, System.currentTimeMillis())
+            repository.saveUserVocabularyState(updatedState, null)
 
             _isCardFlipped.value = false
             _isSrsCardFlipped.value = false
-            
-            if (_dueVocabularies.value.isNotEmpty() && _dueVocabularies.value.size > _currentSrsIndex.value) {
-                _currentSrsIndex.value = (_currentSrsIndex.value + 1) % _dueVocabularies.value.size
-            }
-            if (_flashcards.value.isNotEmpty() && _flashcards.value.size > _currentCardIndex.value) {
-                _currentCardIndex.value = (_currentCardIndex.value + 1) % _flashcards.value.size
-            }
-            
-            observeDueVocabulary()
+
+            nextSrsCard()
         }
+    }
+
+    fun onSrsButtonPressed(button: EaseFactor, currentVocab: Vocabulary) {
+        submitSrsGrade(currentVocab.id, button)
     }
 }
 
@@ -279,7 +246,10 @@ class LearnViewModelFactory(
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(LearnViewModel::class.java)) {
-            return LearnViewModel(repository, ServiceLocator.getCalculateSrsUseCase()) as T
+            return LearnViewModel(
+                repository,
+                ServiceLocator.getCalculateSrsUseCase()
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

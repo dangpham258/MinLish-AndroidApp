@@ -1,6 +1,8 @@
 package com.minlish.app.presentation.navigation
 
 sealed class Screen(val route: String) {
+    object ListOfDeck : Screen("list_of_deck")
+
     object DeckDetail : Screen("deck_detail/{deckId}") {
         fun createRoute(deckId: String) = "deck_detail/$deckId"
     }
