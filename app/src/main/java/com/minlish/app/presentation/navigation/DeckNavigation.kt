@@ -67,6 +67,15 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
             },
             onNavigateToUpdateWord = { id, wordId ->
                 navController.navigate(DeckRoute.AddUpdateWord.createRoute(id, wordId))
+            },
+            onNavigateToFlashcard = { id ->
+                navController.navigate(Screen.Flashcard.createRoute(id))
+            },
+            onNavigateToSRS = { id ->
+                navController.navigate(Screen.SRS.createRoute(id))
+            },
+            onNavigateToContext = { id ->
+                navController.navigate(Screen.ContextLearning.createRoute(id))
             }
         )
     }

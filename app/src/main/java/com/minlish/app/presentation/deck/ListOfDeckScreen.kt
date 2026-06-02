@@ -40,7 +40,21 @@ fun ListOfDeckScreen(
     onNavigateToCreateDeck: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
+
+    // Thu thập danh sách Deck trực tiếp từ Flow kết nối với Firebase
     val decks by viewModel.decks.collectAsState()
+
+    // Sử dụng derivedStateOf để tối ưu hóa việc lọc danh sách chủ đề theo tên,
+    // tránh re-compute vô ích khi các trạng thái không liên quan thay đổi.
+    val filteredDecks by remember {
+        derivedStateOf {
+            if (searchQuery.isBlank()) {
+                decks
+            } else {
+                decks.filter { it.deckName.contains(searchQuery, ignoreCase = true) }
+            }
+        }
+    }
 
     Scaffold(
         containerColor = DeckColors.Background,
@@ -134,13 +148,22 @@ fun ListOfDeckScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Hiển thị danh sách Deck từ Firebase sau khi lọc
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(bottom = 120.dp)
             ) {
-                items(decks.filter { it.name.contains(searchQuery, ignoreCase = true) }) { deck ->
+                items(
+                    items = filteredDecks,
+                    key = { deck -> deck.id } // Gán Key để tăng hiệu năng tái cấu trúc danh sách (Recomposition)
+                ) { deck ->
+                    val progressCount by viewModel.getDeckProgress(deck.id).collectAsState(initial = 0)
+                    val totalCount = deck.vocabularyIds.size
+                    val progressPercent = if (totalCount > 0) (progressCount.toFloat() / totalCount * 100).toInt() else 0
+
                     DeckCardItem(
                         deck = deck,
+                        progressPercent = progressPercent,
                         onClick = { onNavigateToDeckDetail(deck.id) }
                     )
                 }
@@ -149,16 +172,10 @@ fun ListOfDeckScreen(
     }
 }
 
-
 @Composable
-fun DeckCardItem(
-    deck: Deck,
-    onClick: () -> Unit
-) {
+fun DeckCardItem(deck: Deck, progressPercent: Int, onClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = DeckColors.SurfaceContainerLowest),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -222,8 +239,9 @@ fun DeckCardItem(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Hiển thị danh sách nhãn mục tiêu (Tags) được lấy trực tiếp từ cấu trúc Firebase
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                deck.tags.forEachIndexed { index, tag ->
+                deck.tags.take(3).forEachIndexed { index, tag ->
                     Box(
                         modifier = Modifier
                             .background(
@@ -233,7 +251,7 @@ fun DeckCardItem(
                             .padding(horizontal = 12.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = tag,
+                            text = tag.name,
                             style = DeckTypography.labelLg,
                             color = if (index % 2 == 0) DeckColors.OnSecondaryContainer else DeckColors.OnPrimaryContainer
                         )

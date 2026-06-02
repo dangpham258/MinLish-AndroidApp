@@ -1,31 +1,29 @@
 package com.minlish.app.presentation.deck
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.minlish.app.core.di.ServiceLocator
 import com.minlish.app.domain.model.Deck
 import com.minlish.app.domain.model.Vocabulary
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import androidx.lifecycle.viewModelScope
+import com.minlish.app.domain.model.enumration.LearningGoal
+import com.minlish.app.domain.repository.BunnyRepository
 import com.minlish.app.domain.usecase.AutoFillWordUseCase
-import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import java.util.UUID
 
-// TODO: Integrate with real use cases and repositories for Firebase & API
-@HiltViewModel
-class DeckViewModel @Inject constructor(
+class DeckViewModel(
+    private val repository: BunnyRepository,
     private val autoFillWordUseCase: AutoFillWordUseCase
 ) : ViewModel() {
 
-    private val _decks = MutableStateFlow<List<Deck>>(
-        listOf(
-            Deck(id = "1", name = "IELTS Speaking Part 1", tags = listOf("IELTS", "Speaking"), totalWords = 50),
-            Deck(id = "2", name = "Business English", tags = listOf("Business"), totalWords = 120),
-            Deck(id = "3", name = "Daily Conversation", tags = listOf("Daily"), totalWords = 30)
+    val decks: StateFlow<List<Deck>> = repository.getDecks()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
         )
-    )
-    val decks: StateFlow<List<Deck>> = _decks.asStateFlow()
 
     private val _currentDeck = MutableStateFlow<Deck?>(null)
     val currentDeck: StateFlow<Deck?> = _currentDeck.asStateFlow()
@@ -33,52 +31,99 @@ class DeckViewModel @Inject constructor(
     private val _words = MutableStateFlow<List<Vocabulary>>(emptyList())
     val words: StateFlow<List<Vocabulary>> = _words.asStateFlow()
 
-    // Thêm state để quản lý việc Auto-fill
     private val _isSearchingAPI = MutableStateFlow(false)
     val isSearchingAPI: StateFlow<Boolean> = _isSearchingAPI.asStateFlow()
 
-    // Inject UseCase vào ViewModel (thông qua Hilt/Dagger)
+    private val _loadingProgress = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val loadingProgress: StateFlow<Map<String, Int>> = _loadingProgress.asStateFlow()
+
+    init {
+        syncDataIfNeeded()
+    }
+
+    private fun syncDataIfNeeded() {
+        viewModelScope.launch {
+            try {
+                repository.prepopulateInitialData()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     fun searchWordToAutoFill(query: String, partOfSpeech: String, onResult: (Vocabulary?) -> Unit) {
         viewModelScope.launch {
             _isSearchingAPI.value = true
-            // Gọi UseCase
             val wordData = autoFillWordUseCase(query, partOfSpeech)
             _isSearchingAPI.value = false
-
             onResult(wordData)
         }
     }
 
     fun searchDecks(query: String) {
-        // Mock search
+        // Có thể filter Local state ở ListOfDeckScreen, không cần xử lý logic phức tạp ở đây
     }
 
     fun loadDeckDetails(deckId: String) {
-        // Mock load
-        _currentDeck.value = _decks.value.find { it.id == deckId }
-        _words.value = listOf(
-            Vocabulary("w1", deckId, "Abandon", "/əˈbændən/", "Verb", "", null, "To leave completely and finally", "Từ bỏ", "He abandoned his car in the snow."),
-            Vocabulary("w2", deckId, "Ability", "/əˈbɪlɪti/", "Noun", "", null, "Capacity or power to do something", "Khả năng", "She has the ability to learn quickly.")
-        )
+        viewModelScope.launch {
+            val deck = repository.getDeckById(deckId)
+            _currentDeck.value = deck
+
+            if (deck != null) {
+                repository.getVocabularyByDeck(deckId, deck.vocabularyIds).collectLatest { vocabList ->
+                    _words.value = vocabList
+                }
+            }
+        }
+    }
+
+    fun getDeckProgress(deckId: String): Flow<Int> {
+        return repository.getProgress(deckId)
+    }
+
+    fun addWord(vocabulary: Vocabulary) {
+        viewModelScope.launch {
+            repository.insertVocabulary(vocabulary)
+        }
+    }
+
+    fun updateWord(vocabulary: Vocabulary) {
+        viewModelScope.launch {
+            repository.insertVocabulary(vocabulary)
+        }
     }
 
     fun createDeck(name: String, description: String, tags: List<String>) {
-        // Mock create
+        viewModelScope.launch {
+            val goalTags = tags.mapNotNull { tag ->
+                try {
+                    LearningGoal.valueOf(tag.uppercase())
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            val newDeck = Deck(
+                id = UUID.randomUUID().toString(),
+                name = name,
+                description = description,
+                tags = goalTags
+            )
+            repository.insertDeck(newDeck)
+        }
     }
+}
 
-    fun deleteDeck(deckId: String) {
-        // Mock delete
-    }
-
-    fun addWord(word: Vocabulary) {
-        // Mock add word
-    }
-
-    fun updateWord(word: Vocabulary) {
-        // Mock update word
-    }
-
-    fun deleteWord(wordId: String) {
-        // Mock delete word
+class DeckViewModelFactory(
+    private val repository: BunnyRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(DeckViewModel::class.java)) {
+            return DeckViewModel(
+                repository,
+                ServiceLocator.getAutoFillWordUseCase()
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

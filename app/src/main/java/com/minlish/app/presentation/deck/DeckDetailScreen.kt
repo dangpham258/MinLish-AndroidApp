@@ -1,5 +1,8 @@
 package com.minlish.app.presentation.deck
 
+import android.content.Context
+import android.media.MediaPlayer
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,12 +24,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import android.content.Context
-import android.media.MediaPlayer
-import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.minlish.app.domain.model.Vocabulary
+import com.minlish.app.presentation.common.component.BunnyAppBar
+import com.minlish.app.presentation.common.component.BunnyBottomNavBar
+import com.minlish.app.ui.theme.DeckColors
+import com.minlish.app.ui.theme.DeckTypography
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,11 +38,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
-import com.minlish.app.presentation.common.component.BunnyAppBar
-import com.minlish.app.presentation.common.component.BunnyBottomNavBar
 import com.minlish.app.presentation.common.component.BunnyTab
-import com.minlish.app.ui.theme.DeckColors
-import com.minlish.app.ui.theme.DeckTypography
 
 @Composable
 fun DeckDetailScreen(
@@ -46,7 +46,10 @@ fun DeckDetailScreen(
     deckId: String,
     onNavigateBack: () -> Unit,
     onNavigateToAddWord: (String) -> Unit,
-    onNavigateToUpdateWord: (String, String) -> Unit
+    onNavigateToUpdateWord: (String, String) -> Unit,
+    onNavigateToFlashcard: (String) -> Unit,
+    onNavigateToSRS: (String) -> Unit,
+    onNavigateToContext: (String) -> Unit
 ) {
     LaunchedEffect(deckId) {
         viewModel.loadDeckDetails(deckId)
@@ -102,16 +105,13 @@ fun DeckDetailScreen(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Icon(Icons.Default.MenuBook, contentDescription = null, tint = DeckColors.OnPrimaryContainer, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("${d.totalWords} Words", style = DeckTypography.labelLg, color = DeckColors.OnPrimaryContainer)
+                                Text("${words.size} Words", style = DeckTypography.labelLg, color = DeckColors.OnPrimaryContainer)
                             }
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(d.name, style = DeckTypography.headlineLg, color = DeckColors.OnPrimaryContainer)
+                            // Dùng d.deckName thay vì d.name
+                            Text(d.deckName, style = DeckTypography.headlineLg, color = DeckColors.OnPrimaryContainer)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "Master common topics like Hobbies, Work, and Hometown with high-scoring vocabulary and natural idioms.",
-                                style = DeckTypography.bodyMd,
-                                color = DeckColors.OnPrimaryContainer
-                            )
+                            Text(d.description, style = DeckTypography.bodyMd, color = DeckColors.OnPrimaryContainer)
                         }
                     }
                 }
@@ -138,7 +138,7 @@ fun DeckDetailScreen(
                                 }
                             }
                         }
-                        
+
                         Card(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(16.dp),
@@ -166,22 +166,25 @@ fun DeckDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     LearningModeItem(
-                        title = "Flashcard",
-                        icon = Icons.Default.PlayArrow,
-                        bgColor = DeckColors.PrimaryContainer,
-                        modifier = Modifier.weight(1f)
+                        title = "Flashcard", 
+                        icon = Icons.Default.PlayArrow, 
+                        bgColor = DeckColors.PrimaryContainer, 
+                        modifier = Modifier.weight(1f),
+                        onClick = { onNavigateToFlashcard(deckId) }
                     )
                     LearningModeItem(
-                        title = "Spaced Repetition",
-                        icon = Icons.Default.Refresh,
-                        bgColor = DeckColors.SecondaryContainer,
-                        modifier = Modifier.weight(1f)
+                        title = "Spaced Repetition", 
+                        icon = Icons.Default.Refresh, 
+                        bgColor = DeckColors.SecondaryContainer, 
+                        modifier = Modifier.weight(1f),
+                        onClick = { onNavigateToSRS(deckId) }
                     )
                     LearningModeItem(
-                        title = "Context-based learning",
-                        icon = Icons.Default.MenuBook,
-                        bgColor = DeckColors.TertiaryContainer,
-                        modifier = Modifier.weight(1f)
+                        title = "Context-based", 
+                        icon = Icons.Default.MenuBook, 
+                        bgColor = DeckColors.TertiaryContainer, 
+                        modifier = Modifier.weight(1f),
+                        onClick = { onNavigateToContext(deckId) }
                     )
                 }
             }
@@ -202,9 +205,16 @@ fun DeckDetailScreen(
 }
 
 @Composable
-fun LearningModeItem(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, bgColor: Color, modifier: Modifier) {
+fun LearningModeItem(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    bgColor: Color, 
+    modifier: Modifier,
+    onClick: () -> Unit
+) {
     Card(
         modifier = modifier.aspectRatio(0.85f),
+        onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = bgColor.copy(alpha = 0.5f))
     ) {
