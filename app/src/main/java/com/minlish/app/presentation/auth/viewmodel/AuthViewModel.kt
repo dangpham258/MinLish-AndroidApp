@@ -7,6 +7,7 @@ import com.minlish.app.domain.usecase.GetAuthStateUseCase
 import com.minlish.app.domain.usecase.LoginUseCase
 import com.minlish.app.domain.usecase.SignUpUseCase
 import com.minlish.app.core.util.GoogleAuthManager
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,8 @@ class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
+    private val auth = FirebaseAuth.getInstance()
+
     private val _isUserLoggedIn = MutableStateFlow<Boolean?>(null)
     val isUserLoggedIn = _isUserLoggedIn.asStateFlow()
 
@@ -33,7 +36,10 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun checkAuthState() {
-        _isUserLoggedIn.value = getAuthStateUseCase()
+        // Xoa session cu de luon yeu cau dang nhap thu cong
+        auth.signOut()
+        googleAuthManager.signOutSilently()
+        _isUserLoggedIn.value = false
     }
 
     private val _isLoading = MutableStateFlow(false)

@@ -339,15 +339,8 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedButton(
-                onClick = { 
-                    // Use GoogleAuthManager from ViewModel
-                    val signInIntent = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(
-                        context, 
-                        com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
-                            .requestIdToken("607388926260-net4bpfn8pof9tv8l72q80e67d3g0unk.apps.googleusercontent.com")
-                            .requestEmail()
-                            .build()
-                    ).signInIntent
+                onClick = {
+                    val signInIntent = viewModel.getGoogleAuthManager().getSignInIntent()
                     googleSignInLauncher.launch(signInIntent)
                 },
                 modifier = Modifier

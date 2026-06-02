@@ -31,15 +31,27 @@ class GoogleAuthManager @Inject constructor(
     }
 
     fun signIn(activity: Activity) {
+        if (!::googleSignInClient.isInitialized) {
+            initialize()
+        }
         val signInIntent = googleSignInClient.signInIntent
         activity.startActivityForResult(signInIntent, RC_SIGN_IN)
     }
 
     fun handleSignInResult(data: Intent?, onSuccess: (GoogleSignInAccount) -> Unit, onError: (Exception) -> Unit) {
+        if (data == null) {
+            onError(Exception("Khong co ket qua dang nhap Google"))
+            return
+        }
+
         val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-        
+
         task.addOnSuccessListener { account ->
-            onSuccess(account)
+            if (account != null && account.idToken != null) {
+                onSuccess(account)
+            } else {
+                onError(Exception("Tai khoan Google khong hop le"))
+            }
         }.addOnFailureListener { exception ->
             Log.e("GoogleAuthManager", "Google Sign-In failed", exception)
             onError(exception)
@@ -64,11 +76,32 @@ class GoogleAuthManager @Inject constructor(
     }
 
     fun signOut(onComplete: () -> Unit = {}) {
+        if (!::googleSignInClient.isInitialized) {
+            initialize()
+        }
         googleSignInClient.signOut()
             .addOnCompleteListener {
                 auth.signOut()
                 onComplete()
             }
+    }
+
+    fun signOutSilently() {
+        try {
+            if (!::googleSignInClient.isInitialized) {
+                initialize()
+            }
+            googleSignInClient.signOut()
+        } catch (_: Exception) {
+            // Ignore errors
+        }
+    }
+
+    fun getSignInIntent(): Intent {
+        if (!::googleSignInClient.isInitialized) {
+            initialize()
+        }
+        return googleSignInClient.signInIntent
     }
 
     fun getCurrentUser() = auth.currentUser
