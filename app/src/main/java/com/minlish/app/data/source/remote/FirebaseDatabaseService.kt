@@ -118,9 +118,6 @@ class FirebaseDatabaseService @Inject constructor() {
         updates["email"] = null
         updates["createdAt"] = null
         
-        // Xoa neu co learningGoals cu (singular)
-        updates["userProfile/learningGoals"] = null
-        
         // Update
         userRef.updateChildren(updates).await()
     }
