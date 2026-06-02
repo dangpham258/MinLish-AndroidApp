@@ -48,7 +48,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minlish.app.core.utils.AudioPlayer
+import com.minlish.app.core.util.AudioPlayer
 import com.minlish.app.domain.model.Vocabulary
 import com.minlish.app.presentation.common.BunnyLoadingScreen
 import com.minlish.app.presentation.common.component.BunnyAppBar

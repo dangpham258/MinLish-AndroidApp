@@ -174,7 +174,7 @@ fun AddUpdateWordScreen(
                         } else {
                             Icon(Icons.Default.Search, contentDescription = "Auto Fill")
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Auto-fill from API")
+                            Text("Find the vocabulary")
                         }
                     }
 

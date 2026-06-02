@@ -2,7 +2,7 @@ package com.minlish.app.core.di
 
 import android.content.Context
 import com.minlish.app.core.database.BunnyDatabase
-import com.minlish.app.core.database.FirebaseDatabaseService
+import com.minlish.app.data.source.remote.FirebaseDatabaseService
 import com.minlish.app.data.repository.BunnyRepositoryImpl
 import com.minlish.app.domain.repository.BunnyRepository
 import com.minlish.app.domain.repository.WordRepository
@@ -19,13 +19,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    @Provides
-    @Singleton
-    fun provideFirebaseDatabaseService(
-        @ApplicationContext context: Context
-    ): FirebaseDatabaseService {
-        return FirebaseDatabaseService(context)
-    }
+
 
     @Provides
     @Singleton

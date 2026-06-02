@@ -37,7 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
-import com.minlish.app.core.utils.AudioPlayer
+import com.minlish.app.core.util.AudioPlayer
 import com.minlish.app.domain.model.*
 import com.minlish.app.domain.model.enumration.*
 import com.minlish.app.domain.repository.BunnyRepository

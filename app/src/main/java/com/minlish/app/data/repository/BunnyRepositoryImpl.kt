@@ -1,7 +1,7 @@
 package com.minlish.app.data.repository
 
 import com.minlish.app.core.database.BunnyDatabase
-import com.minlish.app.core.database.FirebaseDatabaseService
+import com.minlish.app.data.source.remote.FirebaseDatabaseService
 import com.minlish.app.data.source.local.DeckProgressEntity
 import com.minlish.app.domain.model.*
 import com.minlish.app.domain.model.enumration.*

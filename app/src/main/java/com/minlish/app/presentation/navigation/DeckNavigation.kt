@@ -12,38 +12,21 @@ import com.minlish.app.presentation.deck.DeckDetailScreen
 import com.minlish.app.presentation.deck.DeckViewModel
 import com.minlish.app.presentation.deck.ListOfDeckScreen
 
-sealed class DeckRoute(val route: String) {
-    object DeckList : DeckRoute("deck_list")
-    object CreateDeck : DeckRoute("create_deck")
-    object DeckDetail : DeckRoute("deck_detail/{deckId}") {
-        fun createRoute(deckId: String) = "deck_detail/$deckId"
-    }
-    object AddUpdateWord : DeckRoute("add_update_word/{deckId}?wordId={wordId}") {
-        fun createRoute(deckId: String, wordId: String? = null): String {
-            return if (wordId != null) {
-                "add_update_word/$deckId?wordId=$wordId"
-            } else {
-                "add_update_word/$deckId"
-            }
-        }
-    }
-}
-
 fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
-    composable(route = DeckRoute.DeckList.route) {
+    composable(route = Screen.ListOfDeck.route) {
         val viewModel: DeckViewModel = hiltViewModel()
         ListOfDeckScreen(
             viewModel = viewModel,
             onNavigateToDeckDetail = { deckId ->
-                navController.navigate(DeckRoute.DeckDetail.createRoute(deckId))
+                navController.navigate(Screen.DeckDetail.createRoute(deckId))
             },
             onNavigateToCreateDeck = {
-                navController.navigate(DeckRoute.CreateDeck.route)
+                navController.navigate(Screen.CreateDeck.route)
             }
         )
     }
 
-    composable(route = DeckRoute.CreateDeck.route) {
+    composable(route = Screen.CreateDeck.route) {
         val viewModel: DeckViewModel = hiltViewModel()
         CreateNewDeckScreen(
             viewModel = viewModel,
@@ -52,7 +35,7 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
     }
 
     composable(
-        route = DeckRoute.DeckDetail.route,
+        route = Screen.DeckDetail.route,
         arguments = listOf(navArgument("deckId") { type = NavType.StringType })
     ) { backStackEntry ->
         val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
@@ -63,10 +46,10 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
             deckId = deckId,
             onNavigateBack = { navController.popBackStack() },
             onNavigateToAddWord = { id ->
-                navController.navigate(DeckRoute.AddUpdateWord.createRoute(id))
+                navController.navigate(Screen.AddUpdateWord.createRoute(id))
             },
             onNavigateToUpdateWord = { id, wordId ->
-                navController.navigate(DeckRoute.AddUpdateWord.createRoute(id, wordId))
+                navController.navigate(Screen.AddUpdateWord.createRoute(id, wordId))
             },
             onNavigateToFlashcard = { id ->
                 navController.navigate(Screen.Flashcard.createRoute(id))
@@ -81,7 +64,7 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
     }
 
     composable(
-        route = DeckRoute.AddUpdateWord.route,
+        route = Screen.AddUpdateWord.route,
         arguments = listOf(
             navArgument("deckId") { type = NavType.StringType },
             navArgument("wordId") {

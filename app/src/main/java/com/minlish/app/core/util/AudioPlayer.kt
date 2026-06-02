@@ -1,4 +1,4 @@
-package com.minlish.app.core.utils
+package com.minlish.app.core.util
 
 import android.media.AudioAttributes
 import android.media.MediaPlayer
