@@ -22,7 +22,7 @@ interface BunnyRepository {
     fun getVocabularyDueForReview(currentTime: Long, deckId: String? = null): Flow<List<Vocabulary>>
     fun getNewVocabularyForLearning(deckId: String? = null, limit: Int = 10): Flow<List<Vocabulary>>
     suspend fun getUserVocabularyState(vocabularyId: String): UserVocabularyState?
-    suspend fun saveUserVocabularyState(state: UserVocabularyState, previousEaseFactor: EaseFactor?)
+    suspend fun saveUserVocabularyState(state: UserVocabularyState, rating: EaseFactor?)
 
     // User Profile / Settings
     fun getUserName(): Flow<String>
@@ -37,6 +37,7 @@ interface BunnyRepository {
     fun getLearnedWordsCount(): Flow<Int>
     fun getStreakDaysCount(): Flow<Int>
     suspend fun incrementStreak()
+    suspend fun notifyNewWordLearned(vocabularyId: String)
 
     // Review History
     fun getReviewHistory(vocabularyId: String): Flow<List<ReviewHistory>>
@@ -48,6 +49,7 @@ interface BunnyRepository {
 
     // Database Initialization
     suspend fun prepopulateInitialData()
-    suspend fun saveProgress(deckId: String, learnedCount: Int, totalCount: Int)
+    suspend fun saveProgress(deckId: String, learnedCount: Int, totalCount: Int, learnedIds: Set<String>)
     fun getProgress(deckId: String): Flow<Int>
+    suspend fun getDeckProgressEntity(deckId: String): com.minlish.app.data.source.local.DeckProgressEntity?
 }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import android.util.Log
+import java.util.Date
 import java.util.UUID
 import com.minlish.app.domain.model.Deck
 import com.minlish.app.domain.model.Vocabulary
@@ -357,13 +358,49 @@ class FirebaseDatabaseService @Inject constructor() {
             "deckId" to state.deckId,
             "interval" to state.interval,
             "repetition" to state.repetition,
-            "easeFactor" to state.easeFactor.name,
-            "nextReview" to state.nextReview.time
+            "easeFactor" to state.easeFactor,
+            "nextReview" to mapOf(
+                "time" to state.nextReview.time,
+                "date" to state.nextReview.date,
+                "day" to state.nextReview.day,
+                "hours" to state.nextReview.hours,
+                "minutes" to state.nextReview.minutes,
+                "month" to state.nextReview.month,
+                "seconds" to state.nextReview.seconds,
+                "year" to state.nextReview.year,
+                "timezoneOffset" to state.nextReview.timezoneOffset
+            )
         )
         try {
             database.getReference("vocabularyStates").child(userId).child(state.vocabId).setValue(srsData).await()
         } catch (e: Exception) {
             Log.e("FirebaseDB", "Error syncing vocabulary state: ${e.message}")
+        }
+    }
+
+    suspend fun getUserVocabularyState(userId: String, vocabId: String): UserVocabularyState? {
+        return try {
+            val snapshot = database.getReference("vocabularyStates").child(userId).child(vocabId).get().await()
+            if (snapshot.exists()) {
+                val nextReviewSnapshot = snapshot.child("nextReview")
+                val nextReviewTime = if (nextReviewSnapshot.hasChild("time")) {
+                    nextReviewSnapshot.child("time").getValue(Long::class.java) ?: System.currentTimeMillis()
+                } else {
+                    nextReviewSnapshot.getValue(Long::class.java) ?: System.currentTimeMillis()
+                }
+
+                UserVocabularyState(
+                    vocabId = snapshot.child("vocabId").getValue(String::class.java) ?: vocabId,
+                    deckId = snapshot.child("deckId").getValue(String::class.java) ?: "",
+                    interval = snapshot.child("interval").getValue(Double::class.java) ?: 1.0,
+                    repetition = snapshot.child("repetition").getValue(Int::class.java) ?: 0,
+                    easeFactor = snapshot.child("easeFactor").getValue(Double::class.java) ?: 2.5,
+                    nextReview = Date(nextReviewTime)
+                )
+            } else null
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error getting vocabulary state: ${e.message}")
+            null
         }
     }
 
