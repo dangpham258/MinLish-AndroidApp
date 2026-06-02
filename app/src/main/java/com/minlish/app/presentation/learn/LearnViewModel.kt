@@ -3,7 +3,6 @@ package com.minlish.app.presentation.learn
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.minlish.app.core.di.ServiceLocator
 import com.minlish.app.domain.model.*
 import com.minlish.app.domain.model.enumration.*
 import com.minlish.app.domain.repository.BunnyRepository
@@ -15,7 +14,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Date
 
-open class LearnViewModel(
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+
+@HiltViewModel
+open class LearnViewModel @Inject constructor(
     private val repository: BunnyRepository,
     private val calculateSrsUseCase: CalculateSrsUseCase
 ) : ViewModel() {
@@ -237,20 +240,5 @@ open class LearnViewModel(
 
     fun onSrsButtonPressed(button: EaseFactor, currentVocab: Vocabulary) {
         submitSrsGrade(currentVocab.id, button)
-    }
-}
-
-class LearnViewModelFactory(
-    private val repository: BunnyRepository
-) : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(LearnViewModel::class.java)) {
-            return LearnViewModel(
-                repository,
-                ServiceLocator.getCalculateSrsUseCase()
-            ) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

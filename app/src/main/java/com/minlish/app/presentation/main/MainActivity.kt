@@ -9,8 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.minlish.app.presentation.navigation.DeckRoute
 import com.minlish.app.presentation.navigation.deckNavGraph
-import androidx.compose.runtime.Composable
-import com.minlish.app.presentation.navigation.StudyMethodNavGraph
+import com.minlish.app.presentation.navigation.studyMethodNavGraph
 import com.minlish.app.ui.theme.MinLishAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -28,14 +27,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize()
                 ) {
                     deckNavGraph(navController)
+                    studyMethodNavGraph(navController)
                 }
             }
         }
     }
 }
 
-@Composable
-fun MinLishApp() {
-    val navController = rememberNavController()
-    StudyMethodNavGraph(navController = navController)
-}

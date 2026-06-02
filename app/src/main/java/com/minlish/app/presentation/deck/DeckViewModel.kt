@@ -3,7 +3,6 @@ package com.minlish.app.presentation.deck
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.minlish.app.core.di.ServiceLocator
 import com.minlish.app.domain.model.Deck
 import com.minlish.app.domain.model.Vocabulary
 import com.minlish.app.domain.model.enumration.LearningGoal
@@ -12,8 +11,11 @@ import com.minlish.app.domain.usecase.AutoFillWordUseCase
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class DeckViewModel(
+@HiltViewModel
+class DeckViewModel @Inject constructor(
     private val repository: BunnyRepository,
     private val autoFillWordUseCase: AutoFillWordUseCase
 ) : ViewModel() {
@@ -110,20 +112,5 @@ class DeckViewModel(
             )
             repository.insertDeck(newDeck)
         }
-    }
-}
-
-class DeckViewModelFactory(
-    private val repository: BunnyRepository
-) : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(DeckViewModel::class.java)) {
-            return DeckViewModel(
-                repository,
-                ServiceLocator.getAutoFillWordUseCase()
-            ) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
