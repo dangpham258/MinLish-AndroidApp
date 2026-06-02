@@ -57,6 +57,7 @@ fun DeckDetailScreen(
 
     val deck by viewModel.currentDeck.collectAsState()
     val words by viewModel.words.collectAsState()
+    val learnedCount by viewModel.getDeckProgress(deckId).collectAsState(initial = 0)
 
     Scaffold(
         containerColor = DeckColors.Background,
@@ -134,7 +135,7 @@ fun DeckDetailScreen(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text("Learned", style = DeckTypography.labelLg, color = DeckColors.OnSurface)
-                                    Text("${d.learned}/${d.totalWords}", style = DeckTypography.headlineMd, color = DeckColors.Primary)
+                                    Text("$learnedCount/${d.totalWords}", style = DeckTypography.headlineMd, color = DeckColors.Primary)
                                 }
                             }
                         }

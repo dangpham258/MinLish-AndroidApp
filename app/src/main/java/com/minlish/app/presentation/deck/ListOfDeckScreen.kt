@@ -222,13 +222,12 @@ fun DeckCardItem(deck: Deck, progressPercent: Int, onClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val progress = if (deck.totalWords > 0) (deck.learned.toFloat() / deck.totalWords.toFloat()) * 100 else 0f
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = "Tiến độ: ${progress.toInt()}%", style = DeckTypography.labelLg, color = DeckColors.Outline)
+                Text(text = "Tiến độ: $progressPercent%", style = DeckTypography.labelLg, color = DeckColors.Outline)
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = { progress / 100f },
+                progress = { progressPercent / 100f },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)

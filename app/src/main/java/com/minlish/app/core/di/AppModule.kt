@@ -33,9 +33,10 @@ object AppModule {
     @Singleton
     fun provideBunnyRepository(
         firebaseDatabaseService: FirebaseDatabaseService,
-        bunnyDatabase: BunnyDatabase
+        bunnyDatabase: BunnyDatabase,
+        firebaseAuthApi: com.minlish.app.data.source.remote.FirebaseAuthApi
     ): BunnyRepository {
-        return BunnyRepositoryImpl(firebaseDatabaseService, bunnyDatabase)
+        return BunnyRepositoryImpl(firebaseDatabaseService, bunnyDatabase, firebaseAuthApi)
     }
 
     @Provides

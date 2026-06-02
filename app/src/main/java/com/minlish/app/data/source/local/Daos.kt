@@ -131,8 +131,11 @@ interface BunnyDao {
 
 @Dao
 interface ProgressDao {
-    @Query("SELECT * FROM deck_progress WHERE deckId = :deckId")
-    fun getProgressByDeck(deckId: String): Flow<DeckProgressEntity?>
+    @Query("SELECT * FROM deck_progress WHERE userId = :userId AND deckId = :deckId")
+    fun getProgressByDeck(userId: String, deckId: String): Flow<DeckProgressEntity?>
+
+    @Query("SELECT * FROM deck_progress WHERE userId = :userId AND deckId = :deckId")
+    suspend fun getProgressByDeckDirect(userId: String, deckId: String): DeckProgressEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveProgress(progress: DeckProgressEntity)

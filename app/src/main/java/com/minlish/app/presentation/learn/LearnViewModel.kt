@@ -32,7 +32,6 @@ open class LearnViewModel @Inject constructor(
     private val _vocabularies = MutableStateFlow<List<Vocabulary>>(emptyList())
     open val vocabularies: StateFlow<List<Vocabulary>> = _vocabularies.asStateFlow()
 
-    // Trạng thái Flashcard & Học tập
     private val _flashcards = MutableStateFlow<List<Vocabulary>>(emptyList())
     val flashcards: StateFlow<List<Vocabulary>> = _flashcards.asStateFlow()
 
@@ -51,7 +50,6 @@ open class LearnViewModel @Inject constructor(
     private val _isSrsCardFlipped = MutableStateFlow(false)
     val isSrsCardFlipped: StateFlow<Boolean> = _isSrsCardFlipped.asStateFlow()
 
-    // Missing properties for UI compatibility
     private val _isCompleted = MutableStateFlow(false)
     val isCompleted: StateFlow<Boolean> = _isCompleted.asStateFlow()
 
@@ -70,7 +68,6 @@ open class LearnViewModel @Inject constructor(
         observeDecks()
     }
 
-    // THAY ĐỔI QUAN TRỌNG: Lắng nghe danh sách Deck thực tế từ Firebase truyền tải sang UI
     private fun observeDecks() {
         viewModelScope.launch {
             repository.getDecks().collect { deckList ->
@@ -81,10 +78,9 @@ open class LearnViewModel @Inject constructor(
 
     fun selectDeckById(deckId: String) {
         _isLoading.value = true
-        _loadingProgress.value = 0.05f // Bắt đầu từ 5% để người dùng thấy có chạy ngay
+        _loadingProgress.value = 0.05f
         
         viewModelScope.launch {
-            // Chạy tiến độ giả lập mượt mà trong background
             val progressJob = launch {
                 for (i in 5..90) {
                     delay(12) 
@@ -95,12 +91,26 @@ open class LearnViewModel @Inject constructor(
             val deck = repository.getDeckById(deckId)
             if (deck != null) {
                 _selectedDeck.value = deck
-                resetProgress()
+                
+                // Khôi phục tiến độ cũ từ Local trước khi bắt đầu
+                val savedProgress = repository.getDeckProgressEntity(deckId)
+                learnedIds.clear()
+                if (savedProgress != null && savedProgress.learnedVocabularyIds.isNotBlank()) {
+                    val ids = savedProgress.learnedVocabularyIds.split(",").toSet()
+                    learnedIds.addAll(ids)
+                    _learnedCount.value = learnedIds.size
+                } else {
+                    _learnedCount.value = 0
+                }
+
+                _currentCardIndex.value = 0
+                _currentSrsIndex.value = 0
+                _isCardFlipped.value = false
+                _isSrsCardFlipped.value = false
+                _isCompleted.value = false
                 
                 repository.getVocabularyByDeck(deck.id, deck.vocabularyIds).collect { vocabList ->
                     progressJob.cancel()
-                    
-                    // Chạy nhanh nốt phần còn lại lên 100%
                     val current = (_loadingProgress.value * 100).toInt()
                     for (i in current..100) {
                         delay(4)
@@ -110,10 +120,8 @@ open class LearnViewModel @Inject constructor(
                     _vocabularies.value = vocabList
                     _flashcards.value = vocabList
                     _dueVocabularies.value = vocabList
-                    _learnedCount.value = 0
-                    learnedIds.clear()
                     
-                    delay(250) // Giữ 100% một chút cho cảm giác hoàn thành
+                    delay(250)
                     _isLoading.value = false
                 }
             } else {
@@ -135,24 +143,40 @@ open class LearnViewModel @Inject constructor(
         _isCompleted.value = false
         _learnedCount.value = 0
         learnedIds.clear()
+        saveProgressLocally()
     }
 
     fun flipCard() {
         _isCardFlipped.value = !_isCardFlipped.value
+        if (_isCardFlipped.value) {
+            val currentVocab = _flashcards.value.getOrNull(_currentCardIndex.value)
+            currentVocab?.id?.let { markAsLearned(it) }
+        }
     }
 
     fun toggleSrsCardFlip() {
         _isSrsCardFlipped.value = !_isSrsCardFlipped.value
+        if (_isSrsCardFlipped.value) {
+            val currentVocab = _dueVocabularies.value.getOrNull(_currentSrsIndex.value)
+            currentVocab?.id?.let { markAsLearned(it) }
+        }
     }
 
     fun flipSrsCard() {
         _isSrsCardFlipped.value = !_isSrsCardFlipped.value
+        if (_isSrsCardFlipped.value) {
+            val currentVocab = _dueVocabularies.value.getOrNull(_currentSrsIndex.value)
+            currentVocab?.id?.let { markAsLearned(it) }
+        }
     }
 
     fun markAsLearned(id: String) {
-        if (learnedIds.add(id)) {
-            _learnedCount.value = learnedIds.size
-            saveProgressLocally()
+        viewModelScope.launch {
+            if (learnedIds.add(id)) {
+                _learnedCount.value = learnedIds.size
+                saveProgressLocally()
+                repository.notifyNewWordLearned(id)
+            }
         }
     }
 
@@ -162,7 +186,7 @@ open class LearnViewModel @Inject constructor(
         if (total == 0) return
         
         viewModelScope.launch {
-            repository.saveProgress(deckId, learnedIds.size, total)
+            repository.saveProgress(deckId, learnedIds.size, total, learnedIds)
         }
     }
 
@@ -201,39 +225,34 @@ open class LearnViewModel @Inject constructor(
     }
 
     fun restartLearning() {
-        resetProgress()
         _isCompleted.value = false
+        _currentCardIndex.value = 0
+        _currentSrsIndex.value = 0
     }
 
     fun getButtonIntervalEstimate(vocabId: String, factor: EaseFactor): String {
-        // Có thể bổ sung logic tính toán dự kiến interval tại đây
-        return when (factor) {
-            EaseFactor.AGAIN -> "1 ngày"
-            EaseFactor.HARD -> "2 ngày"
-            EaseFactor.GOOD -> "4 ngày"
-            EaseFactor.EASY -> "7 ngày"
-        }
+        return calculateSrsUseCase.estimateNextIntervalDays(
+            UserVocabularyState(vocabId = vocabId),
+            factor
+        )
     }
 
     fun submitSrsGrade(vocabId: String, grade: EaseFactor) {
         viewModelScope.launch {
-            val currentVocab = _dueVocabularies.value.find { it.id == vocabId } ?: return@launch
-            
-            val stateToProcess = UserVocabularyState(
+            val deckId = _selectedDeck.value?.id ?: ""
+            val currentState = repository.getUserVocabularyState(vocabId) ?: UserVocabularyState(
                 vocabId = vocabId,
-                deckId = _selectedDeck.value?.id ?: "",
-                interval = 1.0,
-                repetition = 0,
-                easeFactor = EaseFactor.GOOD,
-                nextReview = Date()
+                deckId = deckId
             )
+            val updatedState = calculateSrsUseCase(currentState, grade, System.currentTimeMillis())
+            repository.saveUserVocabularyState(updatedState, grade)
 
-            val updatedState = calculateSrsUseCase(stateToProcess, grade, System.currentTimeMillis())
-            repository.saveUserVocabularyState(updatedState, null)
+            if (currentState.repetition == 0 && updatedState.repetition > 0) {
+                markAsLearned(vocabId)
+            }
 
             _isCardFlipped.value = false
             _isSrsCardFlipped.value = false
-
             nextSrsCard()
         }
     }

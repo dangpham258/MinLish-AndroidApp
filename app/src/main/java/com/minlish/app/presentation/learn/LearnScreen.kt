@@ -93,10 +93,6 @@ fun LearnScreen(
                 items[currentIndex]
             } else null
 
-            LaunchedEffect(currentVocab?.id) {
-                currentVocab?.id?.let { viewModel.markAsLearned(it) }
-            }
-
             Scaffold(
                 topBar = { BunnyAppBar(onBackClick = onNavigateBack) },
                 bottomBar = {
