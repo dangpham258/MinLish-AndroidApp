@@ -1,4 +1,4 @@
-package com.minlish.app.presentation.common.theme
+package com.minlish.app.presentation.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

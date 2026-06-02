@@ -1,7 +1,7 @@
-package com.minlish.app
+package com.minlish.app.presentation.main
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
-class MinLishApp : Application()
+class MinLishApplication : Application()

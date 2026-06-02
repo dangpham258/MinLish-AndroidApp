@@ -1,4 +1,4 @@
-package com.minlish.app.presentation.common.navigation
+package com.minlish.app.presentation.navigation
 
 import android.content.Intent
 import androidx.compose.runtime.Composable
@@ -43,13 +43,10 @@ fun AppNavHost(
 ) {
     val isUserLoggedIn by viewModel.isUserLoggedIn.collectAsState()
 
-    // Xử lý deep link khi app được mở từ link reset password
     LaunchedEffect(deepLinkIntent) {
         deepLinkIntent?.data?.let { uri ->
             android.util.Log.d("NavGraph", "Deep link received: $uri")
             
-            // Kiểm tra nếu là link reset password
-            // Format: https://minlish.app/action?mode=resetPassword&oobCode=xxx&apiKey=xxx
             if (uri.path?.contains("resetPassword") == true || uri.host?.contains("google") == true) {
                 val mode = uri.getQueryParameter("mode")
                 val oobCode = uri.getQueryParameter("oobCode")
@@ -104,7 +101,6 @@ fun AppNavHost(
                         navController.popBackStack()
                     },
                     onResetSent = {
-                        // Firebase sẽ gửi email
                         navController.popBackStack()
                     }
                 )
