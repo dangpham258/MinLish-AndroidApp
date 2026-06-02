@@ -1,47 +1,47 @@
-package com.minlish.app
+package com.minlish.app.presentation.main
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.minlish.app.ui.theme.MinLishAppTheme
+import androidx.navigation.compose.rememberNavController
+import com.minlish.app.presentation.navigation.AppNavHost
+import com.minlish.app.presentation.theme.MinLishAppTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        handleDeepLink(intent)
+        
         setContent {
             MinLishAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    val navController = rememberNavController()
+                    AppNavHost(
+                        navController = navController,
+                        deepLinkIntent = intent
                     )
                 }
             }
         }
     }
-}
+                
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleDeepLink(intent)
+    }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MinLishAppTheme {
-        Greeting("Android")
+    private fun handleDeepLink(intent: Intent?) {
+        intent?.data?.let { uri ->
+            android.util.Log.d("MinLishApp", "Deep link received: $uri")
+        }
     }
 }
