@@ -54,9 +54,9 @@ import com.minlish.app.presentation.common.BunnyLoadingScreen
 import com.minlish.app.presentation.common.BunnyAppBar
 import com.minlish.app.presentation.common.BunnyBottomNavBar
 import com.minlish.app.presentation.common.BunnyTab
-import com.minlish.app.theme.BunnyColors
-import com.minlish.app.theme.BunnyTypography
-import com.minlish.app.theme.ContextScreenColors
+import com.minlish.app.presentation.theme.BunnyColors
+import com.minlish.app.presentation.theme.BunnyTypography
+import com.minlish.app.presentation.theme.ContextScreenColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -27,16 +27,6 @@ fun AppNavHost(
     viewModel: AuthViewModel = hiltViewModel(),
     deepLinkIntent: Intent? = null
 ) {
-    val isUserLoggedIn by viewModel.isUserLoggedIn.collectAsState()
-
-    LaunchedEffect(isUserLoggedIn) {
-        if (isUserLoggedIn == true) {
-            navController.navigate(Screen.ListOfDeck.route) {
-                popUpTo(Screen.Auth.route) { inclusive = true }
-            }
-        }
-    }
-
     LaunchedEffect(deepLinkIntent) {
         deepLinkIntent?.data?.let { uri ->
             android.util.Log.d("NavGraph", "Deep link received: $uri")
