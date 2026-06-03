@@ -1,5 +1,7 @@
 package com.minlish.app.presentation.deck
 
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.MenuBook
@@ -24,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.minlish.app.domain.model.Deck
@@ -39,6 +43,7 @@ fun ListOfDeckScreen(
     onNavigateToDeckDetail: (String) -> Unit,
     onNavigateToCreateDeck: () -> Unit
 ) {
+    val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
 
     // Thu thập danh sách Deck trực tiếp từ Flow kết nối với Firebase
@@ -54,6 +59,118 @@ fun ListOfDeckScreen(
                 decks.filter { it.deckName.contains(searchQuery, ignoreCase = true) }
             }
         }
+    }
+
+    // --- State cho dialog xóa deck ---
+    var deckToDelete by remember { mutableStateOf<Deck?>(null) }
+
+    // --- State cho dialog export ---
+    var showExportDialog by remember { mutableStateOf(false) }
+
+    // Dialog xác nhận xóa deck
+    if (deckToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { deckToDelete = null },
+            icon = {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = { Text("Xóa bộ từ vựng", style = DeckTypography.headlineMd) },
+            text = {
+                Text(
+                    "Bạn có chắc muốn xóa bộ \"${deckToDelete!!.name}\"? Hành động này không thể hoàn tác.",
+                    style = DeckTypography.bodyMd
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteDeck(deckToDelete!!.id)
+                        deckToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Xóa")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { deckToDelete = null }) {
+                    Text("Hủy")
+                }
+            }
+        )
+    }
+
+    // Dialog Export CSV: hỏi có bao gồm deck chung không
+    if (showExportDialog) {
+        AlertDialog(
+            onDismissRequest = { showExportDialog = false },
+            icon = {
+                Icon(Icons.Default.Download, contentDescription = null, tint = DeckColors.Primary)
+            },
+            title = { Text("Xuất file CSV", style = DeckTypography.headlineMd) },
+            text = {
+                Text(
+                    "Bạn có muốn bao gồm các bộ từ vựng chung (dùng chung) vào file xuất không?",
+                    style = DeckTypography.bodyMd
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showExportDialog = false
+                        viewModel.exportDecksToCSV(
+                            decks = decks,
+                            includePublic = true,
+                            context = context
+                        ) { uri ->
+                            if (uri != null) {
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/csv"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Chia sẻ file CSV"))
+                                Toast.makeText(context, "Xuất file thành công!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Xuất file thất bại!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                ) {
+                    Text("Có, bao gồm tất cả")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showExportDialog = false
+                        viewModel.exportDecksToCSV(
+                            decks = decks,
+                            includePublic = false,
+                            context = context
+                        ) { uri ->
+                            if (uri != null) {
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/csv"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Chia sẻ file CSV"))
+                                Toast.makeText(context, "Xuất file thành công!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Xuất file thất bại!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                ) {
+                    Text("Không, chỉ của tôi")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -98,7 +215,7 @@ fun ListOfDeckScreen(
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
-                    onClick = { /* Export */ },
+                    onClick = { showExportDialog = true },
                     modifier = Modifier.weight(1f).height(48.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = DeckColors.TertiaryContainer,
@@ -150,7 +267,8 @@ fun ListOfDeckScreen(
                     DeckCardItem(
                         deck = deck,
                         progressPercent = progressPercent,
-                        onClick = { onNavigateToDeckDetail(deck.id) }
+                        onClick = { onNavigateToDeckDetail(deck.id) },
+                        onDeleteClick = { deckToDelete = deck }
                     )
                 }
             }
@@ -159,7 +277,12 @@ fun ListOfDeckScreen(
 }
 
 @Composable
-fun DeckCardItem(deck: Deck, progressPercent: Int, onClick: () -> Unit) {
+fun DeckCardItem(
+    deck: Deck,
+    progressPercent: Int,
+    onClick: () -> Unit,
+    onDeleteClick: (() -> Unit)? = null
+) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
@@ -196,13 +319,34 @@ fun DeckCardItem(deck: Deck, progressPercent: Int, onClick: () -> Unit) {
                         )
                     }
                 }
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(DeckColors.PrimaryContainer.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(Icons.Default.Star, contentDescription = null, tint = DeckColors.Primary)
+                    // Nút xóa — chỉ hiện với deck do người dùng tạo (isPublic=false)
+                    if (!deck.isPublic && onDeleteClick != null) {
+                        IconButton(
+                            onClick = onDeleteClick,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Xóa bộ từ vựng",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(DeckColors.PrimaryContainer.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Star, contentDescription = null, tint = DeckColors.Primary)
+                    }
                 }
             }
 

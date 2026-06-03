@@ -9,9 +9,6 @@ data class User(
     val account: Account = Account(),
     val userProfile: UserProfile = UserProfile(),
     val userSetting: UserSetting = UserSetting(),
-    val avatarIndex: Int = 0,
-    val wordsLearned: Int = 0,
-    val streak: Int = 0
 )
 
 data class Account(
@@ -20,11 +17,14 @@ data class Account(
 )
 
 data class UserProfile(
-    val learningGoal: List<LearningGoal> = emptyList(),
     val initialLevel: InitialLevel = InitialLevel.B1,
     val emailNotification: Boolean = false,
     val dailyReminder: Boolean = false,
-    val spacedRepetition: Boolean = false
+    val spacedRepetition: Boolean = false,
+    val avatarIndex: Int = 0,
+    val wordsLearned: Int = 0,
+    val streak: Int = 0,
+    val tags: List<LearningGoal> = emptyList(),
 )
 
 data class UserSetting(

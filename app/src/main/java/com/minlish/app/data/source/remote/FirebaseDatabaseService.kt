@@ -168,10 +168,19 @@ class FirebaseDatabaseService @Inject constructor() {
             val learningGoals = learningGoalStrings.mapNotNull { value ->
                 LearningGoal.entries.find { it.value == value }
             }
-            
+
             val initialLevelValue = child("userProfile/initialLevel").getValue(String::class.java) ?: "B1"
             val initialLevel = InitialLevel.entries.find { it.value == initialLevelValue } ?: InitialLevel.B1
-            
+
+            // avatarIndex, wordsLearned, streak đã chuyển vào UserProfile trong model mới
+            // Hỗ trợ cả 2 vị trí (migration): nếu có trong userProfile dùng trước, fallback sang top-level
+            val avatarIndex = child("userProfile/avatarIndex").getValue(Int::class.java)
+                ?: child("avatarIndex").getValue(Int::class.java) ?: 0
+            val wordsLearned = child("userProfile/wordsLearned").getValue(Int::class.java)
+                ?: child("wordsLearned").getValue(Int::class.java) ?: 0
+            val streak = child("userProfile/streak").getValue(Int::class.java)
+                ?: child("streak").getValue(Int::class.java) ?: 0
+
             User(
                 id = key ?: "",
                 name = child("name").getValue(String::class.java) ?: "",
@@ -180,19 +189,19 @@ class FirebaseDatabaseService @Inject constructor() {
                     password = child("account/password").getValue(String::class.java) ?: ""
                 ),
                 userProfile = UserProfile(
-                    learningGoal = learningGoals,
+                    tags = learningGoals,
                     initialLevel = initialLevel,
                     emailNotification = child("userProfile/emailNotification").getValue(Boolean::class.java) ?: false,
                     dailyReminder = child("userProfile/dailyReminder").getValue(Boolean::class.java) ?: true,
-                    spacedRepetition = child("userProfile/spacedRepetition").getValue(Boolean::class.java) ?: true
+                    spacedRepetition = child("userProfile/spacedRepetition").getValue(Boolean::class.java) ?: true,
+                    avatarIndex = avatarIndex,
+                    wordsLearned = wordsLearned,
+                    streak = streak
                 ),
                 userSetting = UserSetting(
                     dailyNewWordGoal = child("userSetting/dailyNewWordGoal").getValue(Int::class.java) ?: 10,
                     dailyReviewGoal = child("userSetting/dailyReviewGoal").getValue(Int::class.java) ?: 50
-                ),
-                avatarIndex = child("avatarIndex").getValue(Int::class.java) ?: 0,
-                wordsLearned = child("wordsLearned").getValue(Int::class.java) ?: 0,
-                streak = child("streak").getValue(Int::class.java) ?: 0
+                )
             )
         } catch (e: Exception) {
             null
@@ -444,6 +453,27 @@ class FirebaseDatabaseService @Inject constructor() {
         } catch (e: Exception) {
             Log.e("FirebaseDB", "Error fetching vocab for deck $deckId: ${e.message}")
             emptyList()
+        }
+    }
+
+    // Xóa deck do người dùng tạo
+    suspend fun deleteDeck(deckId: String) {
+        try {
+            database.getReference("decks").child(deckId).removeValue().await()
+            Log.d("FirebaseDB", "Deleted deck: $deckId")
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error deleting deck: ${e.message}")
+        }
+    }
+
+    // Xóa từ vựng khỏi deck do người dùng tạo
+    suspend fun deleteVocabularyFromDeck(deckId: String, vocabId: String) {
+        try {
+            database.getReference("decks").child(deckId)
+                .child("vocabularies").child(vocabId).removeValue().await()
+            Log.d("FirebaseDB", "Deleted vocab '$vocabId' from deck $deckId")
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error deleting vocabulary from deck: ${e.message}")
         }
     }
 

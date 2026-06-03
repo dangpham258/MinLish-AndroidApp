@@ -39,7 +39,7 @@ class BunnyRepositoryImpl(
     private suspend fun updateUserWordsLearned() {
         val userId = getCurrentUserId()
         val user = firebaseService.getUserFromSnapshot(userId) ?: return
-        val currentWords = user.wordsLearned
+        val currentWords = user.userProfile.wordsLearned
         firebaseService.updateUser(userId, mapOf("wordsLearned" to currentWords + 1))
     }
 
@@ -83,6 +83,10 @@ class BunnyRepositoryImpl(
         return 0
     }
 
+    override suspend fun deleteDeck(deckId: String) {
+        firebaseService.deleteDeck(deckId)
+    }
+
     override suspend fun getDeckById(deckId: String): Deck? {
         val decks = firebaseService.getDecks(getCurrentUserId())
         return decks.find { it.id == deckId } ?: decks.find { it.deckName.contains(deckId, ignoreCase = true) }
@@ -121,6 +125,10 @@ class BunnyRepositoryImpl(
             firebaseService.saveVocabularyToDeck(vocabulary.deckId, vocabulary)
         }
         return 0
+    }
+
+    override suspend fun deleteVocabulary(deckId: String, vocabId: String) {
+        firebaseService.deleteVocabularyFromDeck(deckId, vocabId)
     }
     override suspend fun getVocabularyByIdDirect(id: String): Vocabulary? = null
     override fun getActiveUserVocabularyStates(): Flow<List<UserVocabularyState>> = flow { emit(emptyList()) }

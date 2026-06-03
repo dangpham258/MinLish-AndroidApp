@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -58,6 +59,47 @@ fun DeckDetailScreen(
     val deck by viewModel.currentDeck.collectAsState()
     val words by viewModel.words.collectAsState()
     val learnedCount by viewModel.getDeckProgress(deckId).collectAsState(initial = 0)
+
+    // State cho dialog xóa từ vựng
+    var wordToDelete by remember { mutableStateOf<com.minlish.app.domain.model.Vocabulary?>(null) }
+    val isPublicDeck = deck?.isPublic ?: true
+
+    // Dialog xác nhận xóa từ vựng
+    if (wordToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { wordToDelete = null },
+            icon = {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = { Text("Xóa từ vựng", style = DeckTypography.headlineMd) },
+            text = {
+                Text(
+                    "Bạn có chắc muốn xóa từ \"${wordToDelete!!.word}\"? Hành động này không thể hoàn tác.",
+                    style = DeckTypography.bodyMd
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteVocabulary(deckId, wordToDelete!!.id)
+                        wordToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Xóa")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { wordToDelete = null }) {
+                    Text("Hủy")
+                }
+            }
+        )
+    }
 
     Scaffold(
         containerColor = DeckColors.Background,
@@ -198,7 +240,10 @@ fun DeckDetailScreen(
             items(words) { word ->
                 WordCardItem(
                     word = word,
-                    onClick = { onNavigateToUpdateWord(deckId, word.id) }
+                    onClick = { onNavigateToUpdateWord(deckId, word.id) },
+                    onDeleteClick = if (!isPublicDeck) {
+                        { wordToDelete = word }
+                    } else null
                 )
             }
         }
@@ -237,7 +282,11 @@ fun LearningModeItem(
 }
 
 @Composable
-fun WordCardItem(word: Vocabulary, onClick: () -> Unit) {
+fun WordCardItem(
+    word: Vocabulary,
+    onClick: () -> Unit,
+    onDeleteClick: (() -> Unit)? = null
+) {
     val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -246,18 +295,44 @@ fun WordCardItem(word: Vocabulary, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                     Text(word.word, style = DeckTypography.titleLg, color = DeckColors.Primary)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(word.phonetic, style = DeckTypography.bodyMd, color = DeckColors.OnSurface)
                 }
-                Icon(
-                    Icons.Default.VolumeUp, 
-                    contentDescription = "Play Audio", 
-                    tint = DeckColors.PrimaryContainer,
-                    modifier = Modifier.clickable { playAudio(context, word.soundUrl) }
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // Nút xóa — chỉ hiện với deck do người dùng tạo (isPublic=false)
+                    if (onDeleteClick != null) {
+                        IconButton(
+                            onClick = onDeleteClick,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Xóa từ vựng",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Icon(
+                        Icons.Default.VolumeUp,
+                        contentDescription = "Play Audio",
+                        tint = DeckColors.PrimaryContainer,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clickable { playAudio(context, word.soundUrl) }
+                            .padding(8.dp)
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(word.partOfSpeech, style = DeckTypography.labelLg, color = DeckColors.Outline, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)

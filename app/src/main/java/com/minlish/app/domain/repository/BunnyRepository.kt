@@ -8,6 +8,7 @@ interface BunnyRepository {
     // Decks
     fun getDecks(): Flow<List<Deck>>
     suspend fun insertDeck(deck: Deck): Long
+    suspend fun deleteDeck(deckId: String)
     suspend fun getDeckById(deckId: String): Deck?
     fun getDeckByIdFlow(deckId: String): Flow<Deck?>
 
@@ -15,6 +16,7 @@ interface BunnyRepository {
     fun getVocabularyByDeck(deckId: String, vocabularyIds: List<String>): Flow<List<Vocabulary>>
     fun getVocabularyById(id: String): Flow<Vocabulary?>
     suspend fun insertVocabulary(vocabulary: Vocabulary): Long
+    suspend fun deleteVocabulary(deckId: String, vocabId: String)
     suspend fun getVocabularyByIdDirect(id: String): Vocabulary?
 
     // Spaced Repetition States (SRS)
