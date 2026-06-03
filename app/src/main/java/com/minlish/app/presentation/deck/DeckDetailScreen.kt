@@ -27,10 +27,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.minlish.app.domain.model.Vocabulary
-import com.minlish.app.presentation.common.component.BunnyAppBar
-import com.minlish.app.presentation.common.component.BunnyBottomNavBar
-import com.minlish.app.ui.theme.DeckColors
-import com.minlish.app.ui.theme.DeckTypography
+import com.minlish.app.presentation.common.BunnyAppBar
+import com.minlish.app.presentation.common.BunnyBottomNavBar
+import com.minlish.app.presentation.theme.DeckColors
+import com.minlish.app.presentation.theme.DeckTypography
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,7 +38,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
-import com.minlish.app.presentation.common.component.BunnyTab
+import com.minlish.app.presentation.common.BunnyTab
 
 @Composable
 fun DeckDetailScreen(

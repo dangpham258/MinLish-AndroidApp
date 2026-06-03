@@ -51,12 +51,12 @@ import androidx.compose.ui.unit.sp
 import com.minlish.app.core.util.AudioPlayer
 import com.minlish.app.domain.model.Vocabulary
 import com.minlish.app.presentation.common.BunnyLoadingScreen
-import com.minlish.app.presentation.common.component.BunnyAppBar
-import com.minlish.app.presentation.common.component.BunnyBottomNavBar
-import com.minlish.app.presentation.common.component.BunnyTab
-import com.minlish.app.ui.theme.BunnyColors
-import com.minlish.app.ui.theme.BunnyTypography
-import com.minlish.app.ui.theme.ContextScreenColors
+import com.minlish.app.presentation.common.BunnyAppBar
+import com.minlish.app.presentation.common.BunnyBottomNavBar
+import com.minlish.app.presentation.common.BunnyTab
+import com.minlish.app.theme.BunnyColors
+import com.minlish.app.theme.BunnyTypography
+import com.minlish.app.theme.ContextScreenColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

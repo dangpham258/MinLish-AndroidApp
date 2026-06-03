@@ -1,4 +1,4 @@
-package com.minlish.app.ui.theme
+package com.minlish.app.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle

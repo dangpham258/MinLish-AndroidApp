@@ -19,9 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.minlish.app.presentation.common.component.BunnyAppBar
-import com.minlish.app.ui.theme.DeckColors
-import com.minlish.app.ui.theme.DeckTypography
+import com.minlish.app.presentation.common.BunnyAppBar
+import com.minlish.app.presentation.theme.DeckColors
+import com.minlish.app.presentation.theme.DeckTypography
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

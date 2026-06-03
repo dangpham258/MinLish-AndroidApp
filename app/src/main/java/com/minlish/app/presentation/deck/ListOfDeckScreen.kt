@@ -27,11 +27,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.minlish.app.domain.model.Deck
-import com.minlish.app.presentation.common.component.BunnyAppBar
-import com.minlish.app.presentation.common.component.BunnyBottomNavBar
-import com.minlish.app.presentation.common.component.BunnyTab
-import com.minlish.app.ui.theme.DeckColors
-import com.minlish.app.ui.theme.DeckTypography
+import com.minlish.app.presentation.common.BunnyAppBar
+import com.minlish.app.presentation.common.BunnyBottomNavBar
+import com.minlish.app.presentation.common.BunnyTab
+import com.minlish.app.presentation.theme.DeckColors
+import com.minlish.app.presentation.theme.DeckTypography
 
 @Composable
 fun ListOfDeckScreen(

@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.airbnb.lottie.compose.*
 import com.minlish.app.R
-import com.minlish.app.ui.theme.DeckColors
-import com.minlish.app.ui.theme.DeckTypography
+import com.minlish.app.presentation.theme.DeckColors
+import com.minlish.app.presentation.theme.DeckTypography
 
 @Composable
 fun BunnyLoadingScreen(

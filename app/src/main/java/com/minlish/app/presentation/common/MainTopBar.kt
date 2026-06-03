@@ -1,4 +1,4 @@
-package com.minlish.app.presentation.common.component
+package com.minlish.app.presentation.common
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack

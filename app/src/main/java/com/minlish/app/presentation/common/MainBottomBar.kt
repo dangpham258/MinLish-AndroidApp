@@ -1,4 +1,4 @@
-package com.minlish.app.presentation.common.component
+package com.minlish.app.presentation.common
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -25,8 +25,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import com.minlish.app.ui.theme.DeckColors
-import com.minlish.app.ui.theme.DeckTypography
+import com.minlish.app.presentation.theme.DeckColors
+import com.minlish.app.presentation.theme.DeckTypography
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
