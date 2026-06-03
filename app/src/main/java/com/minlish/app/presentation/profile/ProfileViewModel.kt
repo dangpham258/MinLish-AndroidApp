@@ -35,11 +35,10 @@ class ProfileViewModel(
         if (currentUser != null) {
             android.util.Log.d("EmailTest", "ProfileViewModel - Đang tải dữ liệu cho UID: ${currentUser.uid}")
             loadBaseProfileById(currentUser.uid)
+            _isLoggedIn.value = true
         } else {
-            // Trường hợp chưa đăng nhập, dùng UID của "Lê Thảo est" để bạn dễ test giao diện
-            val testUid = "a0H3rLFOXwOtjhBFUxhrvJE7C8A3"
-            android.util.Log.d("EmailTest", "ProfileViewModel - Chưa login, dùng UID test: $testUid")
-            loadBaseProfileById(testUid)
+            android.util.Log.w("EmailTest", "ProfileViewModel - Không tìm thấy User đăng nhập!")
+            _isLoggedIn.value = false
         }
     }
 
