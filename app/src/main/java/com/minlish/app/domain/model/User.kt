@@ -20,14 +20,17 @@ data class Account(
 )
 
 data class UserProfile(
-    val learningGoal: List<LearningGoal> = emptyList(),
     val initialLevel: InitialLevel = InitialLevel.B1,
     val emailNotification: Boolean = false,
-    val dailyReminder: Boolean = true,
-    val spacedRepetition: Boolean = true
+    val dailyReminder: Boolean = false,
+    val spacedRepetition: Boolean = false,
+    val avatarIndex: Int = 0,
+    val wordsLearned: Int = 0,
+    val streak: Int = 0,
+    val tags: List<LearningGoal> = emptyList()
 )
 
 data class UserSetting(
-    val dailyNewWordGoal: Int = 10,
-    val dailyReviewGoal: Int = 50
+    val dailyNewWordGoal: Int = 0,
+    val dailyReviewGoal: Int = 0
 )

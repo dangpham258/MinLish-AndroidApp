@@ -1,4 +1,5 @@
 package com.minlish.app.presentation.auth.ui
+<<<<<<< HEAD
 
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -391,14 +392,4 @@ fun LoginScreen(
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LoginScreenPreview() {
-    LoginScreen(
-        onLoginSuccess = {},
-        onNavigateToRegister = {},
-        onNavigateToForgotPassword = {}
-    )
 }

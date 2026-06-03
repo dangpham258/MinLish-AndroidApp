@@ -52,7 +52,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.collection)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    
     implementation("androidx.compose.material3:material3-adaptive-navigation-suite-android:1.0.0-alpha07")
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
