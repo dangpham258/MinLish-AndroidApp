@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.minlish.app.domain.model.Vocabulary
 import com.minlish.app.presentation.common.component.BunnyAppBar
-import com.minlish.app.presentation.common.component.BunnyBottomNavBar
 import com.minlish.app.ui.theme.DeckColors
 import com.minlish.app.ui.theme.DeckTypography
 import kotlinx.coroutines.CoroutineScope
@@ -62,9 +61,6 @@ fun DeckDetailScreen(
         containerColor = DeckColors.Background,
         topBar = {
             BunnyAppBar(title = "Bunny English", onBackClick = onNavigateBack)
-        },
-        bottomBar = {
-            BunnyBottomNavBar(selectedTab = BunnyTab.LESSONS, onTabSelected = {})
         },
         floatingActionButton = {
             FloatingActionButton(

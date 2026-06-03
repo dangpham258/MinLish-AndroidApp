@@ -1,7 +1,9 @@
 package com.minlish.app.core.di
 
 import com.minlish.app.data.repository.AuthRepositoryImpl
+import com.minlish.app.data.repository.UserRepositoryImpl
 import com.minlish.app.domain.repository.AuthRepository
+import com.minlish.app.domain.repository.UserRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -17,4 +19,10 @@ abstract class RepositoryModule {
     abstract fun bindAuthRepository(
         authRepositoryImpl: AuthRepositoryImpl
     ): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUserRepository(
+        userRepositoryImpl: UserRepositoryImpl
+    ): UserRepository
 }

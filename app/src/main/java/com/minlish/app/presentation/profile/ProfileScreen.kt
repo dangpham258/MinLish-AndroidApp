@@ -32,7 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.minlish.app.domain.model.enumration.InitialLevel
 import java.util.Locale
 
@@ -51,8 +51,9 @@ val ProfileAvatars = listOf(
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
-    editViewModel: EditProfileViewModel = viewModel(),
-    notificationViewModel: NotificationViewModel = viewModel(),
+    editViewModel: EditProfileViewModel = hiltViewModel(),
+    notificationViewModel: NotificationViewModel = hiltViewModel(),
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -138,7 +139,10 @@ fun ProfileScreen(
                 }
 
                 // Logout
-                Row(modifier = Modifier.clickable { viewModel.logout() }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(modifier = Modifier.clickable {
+                    viewModel.logout()
+                    onLogout()
+                }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.AutoMirrored.Filled.Logout, null, tint = Color(0xFFBA1A1A), modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Logout", color = Color(0xFFBA1A1A), fontWeight = FontWeight.Bold, fontSize = 16.sp)

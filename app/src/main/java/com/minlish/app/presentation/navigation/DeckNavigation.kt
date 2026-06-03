@@ -10,22 +10,8 @@ import com.minlish.app.presentation.deck.AddUpdateWordScreen
 import com.minlish.app.presentation.deck.CreateNewDeckScreen
 import com.minlish.app.presentation.deck.DeckDetailScreen
 import com.minlish.app.presentation.deck.DeckViewModel
-import com.minlish.app.presentation.deck.ListOfDeckScreen
 
 fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
-    composable(route = Screen.ListOfDeck.route) {
-        val viewModel: DeckViewModel = hiltViewModel()
-        ListOfDeckScreen(
-            viewModel = viewModel,
-            onNavigateToDeckDetail = { deckId ->
-                navController.navigate(Screen.DeckDetail.createRoute(deckId))
-            },
-            onNavigateToCreateDeck = {
-                navController.navigate(Screen.CreateDeck.route)
-            }
-        )
-    }
-
     composable(route = Screen.CreateDeck.route) {
         val viewModel: DeckViewModel = hiltViewModel()
         CreateNewDeckScreen(
@@ -40,7 +26,6 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
     ) { backStackEntry ->
         val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
         val viewModel: DeckViewModel = hiltViewModel()
-
         DeckDetailScreen(
             viewModel = viewModel,
             deckId = deckId,
@@ -77,7 +62,6 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
         val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
         val wordId = backStackEntry.arguments?.getString("wordId")
         val viewModel: DeckViewModel = hiltViewModel()
-
         AddUpdateWordScreen(
             viewModel = viewModel,
             deckId = deckId,

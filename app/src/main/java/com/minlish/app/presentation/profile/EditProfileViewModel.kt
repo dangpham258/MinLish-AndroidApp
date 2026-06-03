@@ -3,19 +3,21 @@ package com.minlish.app.presentation.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
-import com.minlish.app.data.repository.UserRepositoryImpl
 import com.minlish.app.domain.model.Account
 import com.minlish.app.domain.model.User
 import com.minlish.app.domain.model.UserProfile
 import com.minlish.app.domain.model.enumration.InitialLevel
 import com.minlish.app.domain.repository.UserRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class EditProfileViewModel(
-    private val userRepository: UserRepository = UserRepositoryImpl()
+@HiltViewModel
+class EditProfileViewModel @Inject constructor(
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val userEmail = FirebaseAuth.getInstance().currentUser?.email ?: "23110321@student.hcmute.edu.vn"

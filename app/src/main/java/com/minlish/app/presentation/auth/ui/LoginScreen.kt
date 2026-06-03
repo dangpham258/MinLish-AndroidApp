@@ -1,5 +1,4 @@
 package com.minlish.app.presentation.auth.ui
-<<<<<<< HEAD
 
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -50,7 +49,7 @@ fun LoginScreen(
     onNavigateToForgotPassword: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
-    var email by remember { mutableStateOf("example@gmail.com") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -115,7 +114,7 @@ fun LoginScreen(
                     IconButton(onClick = { /* Back navigation */ }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Trở về",
+                            contentDescription = "Back",
                             tint = PrimaryBlue
                         )
                     }
@@ -205,14 +204,14 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Chào mừng bạn trở lại!",
+                text = "Welcome back!",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = OnSurfaceText,
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "Tiếp tục hành trình chinh phục tiếng Anh cùng Bunny nhé!",
+                text = "Continue your English learning journey with Bunny!",
                 fontSize = 15.sp,
                 color = OnSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -231,7 +230,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("example@gmail.com", color = OutlineVariant) },
+                placeholder = { Text("Enter your email", color = OutlineVariant) },
                 leadingIcon = { Icon(Icons.Default.Email, "Email Icon", tint = PrimaryBlue) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -254,13 +253,13 @@ fun LoginScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Mật khẩu",
+                    text = "Password",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = OnSurfaceVariant
                 )
                 Text(
-                    text = "Quên mật khẩu?",
+                    text = "Forgot password?",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = PrimaryBlue,
@@ -271,13 +270,13 @@ fun LoginScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                placeholder = { Text("Nhập mật khẩu của bạn", color = OutlineVariant) },
+                placeholder = { Text("Enter your password", color = OutlineVariant) },
                 leadingIcon = { Icon(Icons.Default.Lock, "Lock Icon", tint = PrimaryBlue) },
                 trailingIcon = {
                     IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                         Icon(
                             imageVector = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = "Quản lý đóng mở",
+                            contentDescription = "Toggle password visibility",
                             tint = OnSurfaceVariant
                         )
                     }
@@ -313,7 +312,7 @@ fun LoginScreen(
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
                     Text(
-                        text = "Đăng nhập",
+                        text = "Sign In",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = OnPrimary
@@ -329,7 +328,7 @@ fun LoginScreen(
             ) {
                 HorizontalDivider(modifier = Modifier.weight(1f), color = OutlineVariant)
                 Text(
-                    text = "Hoặc đăng nhập bằng",
+                    text = "Or sign in with",
                     fontSize = 12.sp,
                     color = OnSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 12.dp)
@@ -363,7 +362,7 @@ fun LoginScreen(
                         fontSize = 18.sp
                     )
                     Text(
-                        text = "Đăng nhập với Google",
+                        text = "Sign in with Google",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -379,12 +378,12 @@ fun LoginScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Chưa có tài khoản? ",
+                    text = "Don't have an account? ",
                     fontSize = 15.sp,
                     color = OnSurfaceVariant
                 )
                 Text(
-                    text = "Đăng ký ngay",
+                    text = "Sign up",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = PrimaryBlue

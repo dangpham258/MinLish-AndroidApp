@@ -44,8 +44,6 @@ import com.minlish.app.domain.repository.BunnyRepository
 import com.minlish.app.domain.usecase.CalculateSrsUseCase
 import com.minlish.app.presentation.common.BunnyLoadingScreen
 import com.minlish.app.presentation.common.component.BunnyAppBar
-import com.minlish.app.presentation.common.component.BunnyBottomNavBar
-import com.minlish.app.presentation.common.component.BunnyTab
 import com.minlish.app.ui.theme.BunnyColors
 import com.minlish.app.ui.theme.BunnyTypography
 import kotlinx.coroutines.flow.*
@@ -99,12 +97,6 @@ fun LearnScreen(
 
             Scaffold(
                 topBar = { BunnyAppBar(onBackClick = onNavigateBack) },
-                bottomBar = {
-                    BunnyBottomNavBar(
-                        selectedTab = BunnyTab.LESSONS,
-                        onTabSelected = { /* Handle navigation if needed */ }
-                    )
-                },
                 containerColor = BunnyColors.Background,
                 modifier = modifier
             ) { innerPadding ->

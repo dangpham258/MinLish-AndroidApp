@@ -6,17 +6,19 @@ import com.google.firebase.auth.FirebaseAuth
 import com.minlish.app.data.repository.UserRepositoryImpl
 import com.minlish.app.domain.model.User
 import com.minlish.app.domain.repository.UserRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ProfileViewModel(
-    private val userRepository: UserRepository = UserRepositoryImpl()
+@HiltViewModel
+class ProfileViewModel @Inject constructor(
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
-    private val userEmail = auth.currentUser?.email ?: ""
 
     private val _wordsLearned = MutableStateFlow(0)
     val wordsLearned: StateFlow<Int> = _wordsLearned.asStateFlow()
@@ -52,7 +54,6 @@ class ProfileViewModel(
     private fun loadBaseProfileByEmail(email: String) {
         viewModelScope.launch {
             val user = userRepository.getUser(email)
-
             handleUserResult(user)
         }
     }
@@ -74,7 +75,6 @@ class ProfileViewModel(
     }
 
     fun login(email: String, name: String) {
-        // Logic login/register demo
         _isLoggedIn.value = true
     }
 }

@@ -52,8 +52,6 @@ import com.minlish.app.core.util.AudioPlayer
 import com.minlish.app.domain.model.Vocabulary
 import com.minlish.app.presentation.common.BunnyLoadingScreen
 import com.minlish.app.presentation.common.component.BunnyAppBar
-import com.minlish.app.presentation.common.component.BunnyBottomNavBar
-import com.minlish.app.presentation.common.component.BunnyTab
 import com.minlish.app.ui.theme.BunnyColors
 import com.minlish.app.ui.theme.BunnyTypography
 import com.minlish.app.ui.theme.ContextScreenColors
@@ -91,12 +89,6 @@ fun ContextScreen(
 
     Scaffold(
         topBar = { BunnyAppBar(onBackClick = onNavigateBack) },
-        bottomBar = { 
-            BunnyBottomNavBar(
-                selectedTab = BunnyTab.LESSONS,
-                onTabSelected = { /* Handle navigation if needed */ }
-            ) 
-        },
         containerColor = ContextScreenColors.SurfaceBackground,
         modifier = modifier
     ) { innerPadding ->
@@ -456,12 +448,6 @@ fun ContextScreenPreview() {
     // Simplified UI for Preview to avoid ViewModel complex setup
     Scaffold(
         topBar = { BunnyAppBar(onBackClick = {}) },
-        bottomBar = { 
-            BunnyBottomNavBar(
-                selectedTab = BunnyTab.LESSONS,
-                onTabSelected = {}
-            ) 
-        },
         containerColor = ContextScreenColors.SurfaceBackground
     ) { innerPadding ->
         Column(
