@@ -83,6 +83,10 @@ class DeckViewModel @Inject constructor(
     }
 
     fun loadDeckDetails(deckId: String) {
+        // Reset về null/empty ngay lập tức để tránh hiển thị dữ liệu cũ của deck trước
+        _currentDeck.value = null
+        _words.value = emptyList()
+
         viewModelScope.launch {
             val deck = repository.getDeckById(deckId)
             _currentDeck.value = deck
@@ -137,7 +141,9 @@ class DeckViewModel @Inject constructor(
             )
             // Optimistic update: hiển thị ngay trước khi Firebase xác nhận
             _decks.value = _decks.value + newDeck
+            // Lưu lên Firebase, sau đó reload để đồng bộ dữ liệu chính xác từ server
             repository.insertDeck(newDeck)
+            loadDecks()
         }
     }
 

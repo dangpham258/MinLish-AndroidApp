@@ -42,14 +42,21 @@ fun mapToVocabularyDomain(
     val phoneticText = firstEntryWithPhonetics?.phonetics
         ?.firstOrNull { !it.text.isNullOrEmpty() }?.text ?: ""
 
-    // dict.minhqnd.com: lọc theo loại từ tiếng Việt tương ứng
+    // dict.minhqnd.com: chỉ lấy kết quả tiếng Anh (lang_code="en"), bỏ qua các ngôn ngữ khác
+    // rồi lọc các nghĩa tiếng Việt (definition_lang="vi") theo đúng loại từ được chọn.
     val vietnameseMeanings = minhqndResult?.results
+        ?.filter { it.langCode == "en" }
         ?.flatMap { it.meanings ?: emptyList() }
         ?.filter { it.definitionLang == "vi" } ?: emptyList()
 
-    val vietnameseMeaningObj = vietnameseMeanings
-        .firstOrNull { mapViPosToEnglish(it.pos).equals(partOfSpeech, ignoreCase = true) }
-        ?: vietnameseMeanings.firstOrNull()
+    // Tìm nghĩa khớp đúng với loại từ (partOfSpeech) được chọn.
+    // KHÔNG fallback về firstOrNull() vô điều kiện vì sẽ luôn trả về loại từ đầu tiên
+    // (thường là Danh từ) dù người dùng chọn Động từ hay loại từ khác.
+    val matchedByPos = vietnameseMeanings
+        .filter { mapViPosToEnglish(it.pos).equals(partOfSpeech, ignoreCase = true) }
+
+    val vietnameseMeaningObj = matchedByPos.firstOrNull()
+        ?: vietnameseMeanings.firstOrNull { it.pos != null } // fallback: lấy nghĩa có pos đầu tiên
     val vietnameseMeaningText = vietnameseMeaningObj?.definition ?: ""
 
     return Vocabulary(
