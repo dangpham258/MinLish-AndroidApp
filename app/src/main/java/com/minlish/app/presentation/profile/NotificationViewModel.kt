@@ -20,6 +20,7 @@ class NotificationViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val userEmail = FirebaseAuth.getInstance().currentUser?.email ?: "23110321@student.hcmute.edu.vn"
+    private val authUid = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
     private var currentUid: String = ""
 
     private val _emailNotification = MutableStateFlow(false)
@@ -35,23 +36,13 @@ class NotificationViewModel @Inject constructor(
     val selectedGoals: StateFlow<Set<String>> = _selectedGoals.asStateFlow()
 
     fun loadSettings(user: User) {
-        currentUid = user.id
+        currentUid = user.id.ifBlank { authUid }
         val profile = user.userProfile
         _emailNotification.value = profile.emailNotification
         _dailyReminder.value = profile.dailyReminder
         _spacedRepetition.value = profile.spacedRepetition
         _selectedGoals.value = profile.tags.map { it.name }.toSet()
-
-        if (profile.dailyReminder && profile.emailNotification) {
-            viewModelScope.launch {
-                val targetEmail = user.account.email.ifBlank { userEmail }
-                android.util.Log.d("EmailTest", "App Start: Đã bật sẵn, gửi mail tới $targetEmail")
-                userRepository.triggerEmailReminder(
-                    targetEmail,
-                    "Chào mừng bạn quay lại! Đừng quên học tập cùng MinLish hôm nay nhé 🐰"
-                )
-            }
-        }
+        android.util.Log.d("EmailTest", "Loaded profile settings for uid=$currentUid tags=${_selectedGoals.value}")
     }
 
     fun toggleEmailNotification(enabled: Boolean, currentEmail: String) {
@@ -67,32 +58,36 @@ class NotificationViewModel @Inject constructor(
     fun setSpacedRepetition(enabled: Boolean) {
         _spacedRepetition.value = enabled
         viewModelScope.launch {
-            val identifier = if (currentUid.isNotBlank()) currentUid else userEmail
+            val identifier = currentUid.ifBlank { authUid.ifBlank { userEmail } }
             userRepository.updateUserField(identifier, "userProfile/spacedRepetition", enabled)
         }
     }
 
     private fun updateSettings(field: String, value: Boolean, email: String) {
         viewModelScope.launch {
-            val identifier = if (currentUid.isNotBlank()) currentUid else userEmail
-            userRepository.updateUserField(identifier, "userProfile/$field", value)
-            
-            val daily = _dailyReminder.value
-            val notify = _emailNotification.value
-            android.util.Log.d("EmailTest", "Update settings: $field=$value, Daily=$daily, Notify=$notify, EmailArg=$email")
+            try {
+                val identifier = currentUid.ifBlank { authUid.ifBlank { userEmail } }
+                userRepository.updateUserField(identifier, "userProfile/$field", value)
 
-            if (daily && notify) {
-                val targetEmail = if (email.isNotBlank()) email else userEmail
-                val message = "Bạn ơi ! Bạn đã quên minlish rồi sao. Hãy ghé ứng dụng để học tập nào"
-                
-                android.util.Log.d("EmailTest", "Điều kiện thỏa mãn, chuẩn bị gửi tới: $targetEmail")
-                userRepository.triggerEmailReminder(targetEmail, message)
-                
-                userRepository.sendNotification(userEmail, Notification(
-                    title = "Nhắc nhở học tập 🐰",
-                    content = message,
-                    isRead = false
-                ))
+                val daily = _dailyReminder.value
+                val notify = _emailNotification.value
+                android.util.Log.d("EmailTest", "Update settings: $field=$value, Daily=$daily, Notify=$notify, EmailArg=$email")
+
+                if (daily && notify) {
+                    val targetEmail = if (email.isNotBlank()) email else userEmail
+                    val message = "Bạn ơi ! Bạn đã quên minlish rồi sao. Hãy ghé ứng dụng để học tập nào"
+
+                    android.util.Log.d("EmailTest", "Điều kiện thỏa mãn, chuẩn bị gửi tới: $targetEmail")
+                    userRepository.triggerEmailReminder(targetEmail, message)
+
+                    userRepository.sendNotification(userEmail, Notification(
+                        title = "Nhắc nhở học tập 🐰",
+                        content = message,
+                        isRead = false
+                    ))
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("EmailTest", "Update settings/email workflow failed", e)
             }
         }
     }
@@ -106,11 +101,17 @@ class NotificationViewModel @Inject constructor(
         }
         _selectedGoals.value = current
         viewModelScope.launch {
-            val goals = current.mapNotNull { 
-                try { LearningGoal.valueOf(it) } catch (e: Exception) { null } 
+            try {
+                val goals = current.mapNotNull {
+                    try { LearningGoal.valueOf(it) } catch (e: Exception) { null }
+                }
+                val identifier = currentUid.ifBlank { authUid.ifBlank { userEmail } }
+                android.util.Log.d("EmailTest", "Updating tags for uid=$identifier tags=${goals.map { it.value }}")
+                userRepository.updateUserField(identifier, "userProfile/tags", goals)
+                android.util.Log.d("EmailTest", "Updated tags successfully for uid=$identifier")
+            } catch (e: Exception) {
+                android.util.Log.e("EmailTest", "Update tags failed", e)
             }
-            val identifier = if (currentUid.isNotBlank()) currentUid else userEmail
-            userRepository.updateUserField(identifier, "userProfile/tags", goals)
         }
     }
 }

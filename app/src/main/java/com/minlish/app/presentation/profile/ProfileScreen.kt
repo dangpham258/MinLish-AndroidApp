@@ -155,12 +155,11 @@ fun ProfileScreen(
         if (showEditDialog) {
             EditProfileDialog(
                 currentName = name,
-                currentEmail = email,
                 currentLevel = try { InitialLevel.valueOf(levelTag) } catch(e: Exception) { InitialLevel.B1 },
                 currentAvatarIdx = avatarIdx,
                 onDismiss = { showEditDialog = false },
-                onSave = { n, e, l, idx ->
-                    editViewModel.updateFullProfile(n, e, l, idx)
+                onSave = { n, l, idx ->
+                    editViewModel.updateFullProfile(n, l, idx)
                     showEditDialog = false
                     Toast.makeText(context, "Updated Completed!", Toast.LENGTH_SHORT).show()
                 }
@@ -171,11 +170,11 @@ fun ProfileScreen(
 
 // --- Component phụ ---
 @Composable
-fun EditProfileDialog(currentName: String, currentEmail: String, currentLevel: InitialLevel, currentAvatarIdx: Int, onDismiss: () -> Unit, onSave: (String, String, InitialLevel, Int) -> Unit) {
-    var name by remember { mutableStateOf(currentName) }; var email by remember { mutableStateOf(currentEmail) }; var selectedLevel by remember { mutableStateOf(currentLevel) }; var idx by remember { mutableStateOf(currentAvatarIdx) }
+fun EditProfileDialog(currentName: String, currentLevel: InitialLevel, currentAvatarIdx: Int, onDismiss: () -> Unit, onSave: (String, InitialLevel, Int) -> Unit) {
+    var name by remember { mutableStateOf(currentName) }; var selectedLevel by remember { mutableStateOf(currentLevel) }; var idx by remember { mutableStateOf(currentAvatarIdx) }
     var showConfirm by remember { mutableStateOf(false) }
     if (showConfirm) {
-        AlertDialog(onDismissRequest = { showConfirm = false }, title = { Text("Xác nhận") }, text = { Text("Lưu thay đổi?") }, confirmButton = { Button(onClick = { onSave(name, email, selectedLevel, idx); showConfirm = false }, colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor)) { Text("Có") } }, dismissButton = { TextButton(onClick = { showConfirm = false }) { Text("Không") } })
+        AlertDialog(onDismissRequest = { showConfirm = false }, title = { Text("Xác nhận") }, text = { Text("Lưu thay đổi?") }, confirmButton = { Button(onClick = { onSave(name, selectedLevel, idx); showConfirm = false }, colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor)) { Text("Yes") } }, dismissButton = { TextButton(onClick = { showConfirm = false }) { Text("No") } })
     }
     Dialog(onDismissRequest = onDismiss) {
         Surface(shape = RoundedCornerShape(24.dp), color = Color.White) {
@@ -188,7 +187,6 @@ fun EditProfileDialog(currentName: String, currentEmail: String, currentLevel: I
                     }
                 }
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Họ tên") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
                 Text("Initial Level")
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     InitialLevel.entries.take(4).forEach { lvl ->

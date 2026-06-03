@@ -2,8 +2,6 @@ package com.minlish.app.presentation.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
-import com.minlish.app.domain.model.Account
 import com.minlish.app.domain.model.User
 import com.minlish.app.domain.model.UserProfile
 import com.minlish.app.domain.model.enumration.InitialLevel
@@ -19,8 +17,6 @@ import javax.inject.Inject
 class EditProfileViewModel @Inject constructor(
     private val userRepository: UserRepository
 ) : ViewModel() {
-
-    private val userEmail = FirebaseAuth.getInstance().currentUser?.email ?: "23110321@student.hcmute.edu.vn"
 
     private val _name = MutableStateFlow("...")
     val name: StateFlow<String> = _name.asStateFlow()
@@ -48,30 +44,32 @@ class EditProfileViewModel @Inject constructor(
         _levelTag.value = user.userProfile.initialLevel.name
     }
 
-    fun updateFullProfile(newName: String, newEmail: String, newLevel: InitialLevel, newAvatarIdx: Int) {
+    fun updateFullProfile(newName: String, newLevel: InitialLevel, newAvatarIdx: Int) {
         viewModelScope.launch {
-            val userToSave = currentUser?.copy(
-                id = currentUser?.id ?: "",
-                name = newName,
-                account = currentUser?.account?.copy(email = newEmail) ?: Account(email = newEmail),
-                userProfile = (currentUser?.userProfile ?: UserProfile()).copy(
-                    initialLevel = newLevel,
-                    avatarIndex = newAvatarIdx
+            try {
+                val userToSave = currentUser?.copy(
+                    id = currentUser?.id ?: "",
+                    name = newName,
+                    userProfile = (currentUser?.userProfile ?: UserProfile()).copy(
+                        initialLevel = newLevel,
+                        avatarIndex = newAvatarIdx
+                    )
+                ) ?: User(
+                    id = "",
+                    name = newName,
+                    userProfile = UserProfile(initialLevel = newLevel, avatarIndex = newAvatarIdx)
                 )
-            ) ?: User(
-                id = "",
-                name = newName,
-                account = Account(email = newEmail),
-                userProfile = UserProfile(initialLevel = newLevel, avatarIndex = newAvatarIdx)
-            )
 
-            userRepository.saveUser(userToSave)
-            currentUser = userToSave
-            _name.value = newName
-            _emailAddress.value = newEmail
-            _level.value = newLevel.name
-            _levelTag.value = newLevel.name
-            _avatarIndex.value = newAvatarIdx
+                userRepository.saveUser(userToSave)
+                currentUser = userToSave
+                _name.value = newName
+                _level.value = newLevel.name
+                _levelTag.value = newLevel.name
+                _avatarIndex.value = newAvatarIdx
+                android.util.Log.d("EmailTest", "Profile updated for user ${userToSave.id}")
+            } catch (e: Exception) {
+                android.util.Log.e("EmailTest", "Profile update failed", e)
+            }
         }
     }
 }

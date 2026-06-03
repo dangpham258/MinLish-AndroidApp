@@ -173,6 +173,34 @@ class FirebaseDatabaseService @Inject constructor() {
         usersRef.child(uid).updateChildren(updates).await()
     }
 
+    suspend fun updateUserField(uid: String, path: String, value: Any) {
+        usersRef.child(uid).child(path).setValue(value).await()
+    }
+
+    suspend fun findUserIdByEmail(email: String): String? {
+        val snapshot = usersRef
+            .orderByChild("account/email")
+            .equalTo(email)
+            .get()
+            .await()
+
+        return snapshot.children.firstOrNull()?.key
+    }
+
+    suspend fun createNotification(userId: String, notification: com.minlish.app.domain.model.Notification) {
+        val notificationRef = database.getReference("notifications").child(userId).push()
+        val notificationId = notification.id.ifBlank { notificationRef.key ?: UUID.randomUUID().toString() }
+        val notificationData = mapOf(
+            "id" to notificationId,
+            "title" to notification.title,
+            "content" to notification.content,
+            "isRead" to notification.isRead,
+            "createdAt" to com.google.firebase.database.ServerValue.TIMESTAMP
+        )
+
+        notificationRef.setValue(notificationData).await()
+    }
+
     suspend fun deleteUser(uid: String) {
         usersRef.child(uid).removeValue().await()
     }
