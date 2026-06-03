@@ -18,7 +18,7 @@ class WordRepositoryImpl(
 
     override suspend fun fetchWordData(wordQuery: String, partOfSpeech: String): Vocabulary? = withContext(Dispatchers.IO) {
         // 1. Tìm trên Firebase trước
-        val firebaseWord = firebaseSource.getWordFromSystem(wordQuery)
+        val firebaseWord = firebaseSource.getWordFromSystem(wordQuery, partOfSpeech)
         if (firebaseWord != null) {
             return@withContext firebaseWord
         }

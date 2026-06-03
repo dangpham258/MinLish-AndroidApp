@@ -71,7 +71,7 @@ class BunnyRepositoryImpl(
     }
 
     override fun getDecks(): Flow<List<Deck>> = flow {
-        emit(firebaseService.getDecks())
+        emit(firebaseService.getDecks(getCurrentUserId()))
     }
 
     override fun getVocabularyByDeck(deckId: String, vocabularyIds: List<String>): Flow<List<Vocabulary>> = flow {
@@ -79,11 +79,12 @@ class BunnyRepositoryImpl(
     }
 
     override suspend fun insertDeck(deck: Deck): Long {
+        firebaseService.saveDeck(deck)
         return 0
     }
 
     override suspend fun getDeckById(deckId: String): Deck? {
-        val decks = firebaseService.getDecks()
+        val decks = firebaseService.getDecks(getCurrentUserId())
         return decks.find { it.id == deckId } ?: decks.find { it.deckName.contains(deckId, ignoreCase = true) }
     }
 
@@ -114,7 +115,13 @@ class BunnyRepositoryImpl(
     }
 
     override fun getVocabularyById(id: String): Flow<Vocabulary?> = flow { emit(null) }
-    override suspend fun insertVocabulary(vocabulary: Vocabulary): Long = 0
+    override suspend fun insertVocabulary(vocabulary: Vocabulary): Long {
+        // Chỉ lưu lên Firebase nếu có deckId (deck do user tạo)
+        if (vocabulary.deckId.isNotBlank()) {
+            firebaseService.saveVocabularyToDeck(vocabulary.deckId, vocabulary)
+        }
+        return 0
+    }
     override suspend fun getVocabularyByIdDirect(id: String): Vocabulary? = null
     override fun getActiveUserVocabularyStates(): Flow<List<UserVocabularyState>> = flow { emit(emptyList()) }
     override fun getVocabularyDueForReview(currentTime: Long, deckId: String?): Flow<List<Vocabulary>> = flow { emit(emptyList()) }

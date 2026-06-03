@@ -20,7 +20,9 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseSource(): FirebaseSource = FirebaseSourceImpl()
+    fun provideFirebaseSource(
+        firebaseDatabaseService: com.minlish.app.data.source.remote.FirebaseDatabaseService
+    ): FirebaseSource = FirebaseSourceImpl(firebaseDatabaseService)
 
     @Provides
     @Singleton

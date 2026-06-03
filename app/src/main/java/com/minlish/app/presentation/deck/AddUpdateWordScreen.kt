@@ -50,6 +50,24 @@ fun AddUpdateWordScreen(
     val isSearching by viewModel.isSearchingAPI.collectAsState()
     val contextCtx = LocalContext.current
 
+    LaunchedEffect(deckId) {
+        if (isUpdate && viewModel.words.value.isEmpty()) {
+            viewModel.loadDeckDetails(deckId)
+        }
+    }
+
+    LaunchedEffect(wordState) {
+        if (wordState != null && isUpdate) {
+            wordText = wordState.word
+            phonetic = wordState.phonetic
+            partOfSpeech = wordState.partOfSpeech
+            englishDefinition = wordState.englishDefinition
+            vietnameseMeaning = wordState.vietnameseMeaning
+            contextExample = wordState.context
+            soundUrl = wordState.soundUrl
+        }
+    }
+
     val partsOfSpeech = listOf("noun", "verb", "adjective", "adverb", "pronoun", "preposition", "conjunction", "interjection")
     var expandedDropdown by remember { mutableStateOf(false) }
 

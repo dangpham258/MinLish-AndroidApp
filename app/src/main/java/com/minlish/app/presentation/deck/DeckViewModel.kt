@@ -3,6 +3,7 @@ package com.minlish.app.presentation.deck
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.minlish.app.data.source.remote.FirebaseAuthApi
 import com.minlish.app.domain.model.Deck
 import com.minlish.app.domain.model.Vocabulary
 import com.minlish.app.domain.model.enumration.LearningGoal
@@ -17,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class DeckViewModel @Inject constructor(
     private val repository: BunnyRepository,
-    private val autoFillWordUseCase: AutoFillWordUseCase
+    private val autoFillWordUseCase: AutoFillWordUseCase,
+    private val authApi: FirebaseAuthApi
 ) : ViewModel() {
 
     val decks: StateFlow<List<Deck>> = repository.getDecks()
@@ -104,11 +106,14 @@ class DeckViewModel @Inject constructor(
                     null
                 }
             }
+            val currentUserId = authApi.getCurrentUser()?.uid ?: ""
             val newDeck = Deck(
                 id = UUID.randomUUID().toString(),
                 name = name,
                 description = description,
-                tags = goalTags
+                tags = goalTags,
+                createId = currentUserId,
+                isPublic = false
             )
             repository.insertDeck(newDeck)
         }

@@ -199,8 +199,8 @@ class FirebaseDatabaseService @Inject constructor() {
         }
     }
 
-    // Lấy danh sách Deck trực tiếp từ nút "decks"
-    suspend fun getDecks(): List<Deck> {
+    // Lấy danh sách Deck theo userId: deck của user lên đầu, tiếp theo là public decks
+    suspend fun getDecks(userId: String): List<Deck> {
         return try {
             val snapshot = database.getReference("decks").get().await()
             if (!snapshot.exists()) {
@@ -208,18 +208,23 @@ class FirebaseDatabaseService @Inject constructor() {
                 return emptyList()
             }
 
-            Log.d("FirebaseDB", "Found ${snapshot.childrenCount} decks")
+            Log.d("FirebaseDB", "Found ${snapshot.childrenCount} decks, filtering for userId=$userId")
 
-            snapshot.children.mapNotNull { child ->
+            val allDecks = snapshot.children.mapNotNull { child ->
                 try {
                     val nodeKey = child.key ?: ""
-                    // Ưu tiên lấy field "id", nếu không có thì lấy key của node (ví dụ: deck_level_A1)
                     val id = child.child("id").getValue(String::class.java) ?: nodeKey
-                    Log.d("FirebaseDB", "Mapping deck: $id (Key: $nodeKey)")
                     val deckName = child.child("deckName").getValue(String::class.java) ?: ""
                     val description = child.child("description").getValue(String::class.java) ?: ""
                     val createId = child.child("createId").getValue(String::class.java) ?: ""
                     val isPublic = child.child("isPublic").getValue(Boolean::class.java) ?: false
+
+                    // Chỉ lấy deck của user hiện tại HOẶC deck public
+                    if (createId != userId && !isPublic) {
+                        return@mapNotNull null
+                    }
+
+                    Log.d("FirebaseDB", "Mapping deck: $id (Key: $nodeKey, createId: $createId, isPublic: $isPublic)")
 
                     // Xử lý danh sách Tags Enum an toàn
                     val tagsList = mutableListOf<LearningGoal>()
@@ -261,9 +266,99 @@ class FirebaseDatabaseService @Inject constructor() {
                     null
                 }
             }
+
+            // Sắp xếp: deck của user hiện tại lên đầu, sau đó là public decks
+            val userDecks = allDecks.filter { it.createId == userId }
+            val publicDecks = allDecks.filter { it.createId != userId }
+            userDecks + publicDecks
         } catch (e: Exception) {
             Log.e("FirebaseDB", "Error fetching decks: ${e.message}")
             emptyList()
+        }
+    }
+
+    // Tìm từ vựng theo tên từ và loại từ trong toàn bộ deck_vocabularies/deck_minlish_01
+    suspend fun searchVocabularyByWord(word: String, partOfSpeech: String): Vocabulary? {
+        return try {
+            val snapshot = database.getReference("deck_vocabularies/deck_minlish_01").get().await()
+            if (!snapshot.exists()) return null
+
+            val wordLower = word.trim().lowercase()
+            val posLower = partOfSpeech.trim().lowercase()
+            snapshot.children.firstOrNull { child ->
+                val matchWord = child.child("word").getValue(String::class.java)?.lowercase() == wordLower
+                val childPos = child.child("pos").getValue(String::class.java)?.lowercase() ?: ""
+                val matchPos = childPos == posLower || (posLower == "verb" && childPos == "v") || (posLower == "noun" && childPos == "n") || (posLower == "adjective" && childPos == "adj") || (posLower == "adverb" && childPos == "adv")
+                matchWord && matchPos
+            }?.let { child ->
+                val id = child.child("id").getValue(String::class.java) ?: child.key ?: ""
+                val examples = mutableListOf<String>()
+                val exampleNode = child.child("example")
+                if (exampleNode.hasChildren()) {
+                    exampleNode.children.forEach { ex -> ex.getValue(String::class.java)?.let { examples.add(it) } }
+                } else {
+                    exampleNode.getValue(String::class.java)?.let { examples.add(it) }
+                }
+                Vocabulary(
+                    id = id,
+                    deckId = "",  // từ vựng hệ thống, không gắn với deck cụ thể
+                    word = child.child("word").getValue(String::class.java) ?: "",
+                    phonetic = child.child("pronunciation").getValue(String::class.java) ?: "",
+                    partOfSpeech = child.child("pos").getValue(String::class.java) ?: "",
+                    soundUrl = child.child("voiceUrl").getValue(String::class.java) ?: "",
+                    level = child.child("level").getValue(String::class.java),
+                    englishDefinition = child.child("descriptionEnglish").getValue(String::class.java) ?: "",
+                    vietnameseMeaning = child.child("meaning").getValue(String::class.java) ?: "",
+                    context = examples.joinToString("\n"),
+                    note = child.child("note").getValue(String::class.java) ?: ""
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error searching vocabulary by word '$word': ${e.message}")
+            null
+        }
+    }
+
+    // Lưu deck do người dùng tạo lên Firebase
+    suspend fun saveDeck(deck: Deck) {
+        try {
+            val deckData = mapOf(
+                "id" to deck.id,
+                "deckName" to deck.name,
+                "description" to deck.description,
+                "isPublic" to deck.isPublic,
+                "createId" to deck.createId,
+                "tags" to deck.tags.map { it.name }
+            )
+            database.getReference("decks").child(deck.id).setValue(deckData).await()
+            Log.d("FirebaseDB", "Saved deck: ${deck.id}")
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error saving deck: ${e.message}")
+        }
+    }
+
+    // Thêm từ vựng vào deck do người dùng tạo trên Firebase
+    suspend fun saveVocabularyToDeck(deckId: String, vocabulary: Vocabulary) {
+        try {
+            val vocabData = mapOf(
+                "id" to vocabulary.id,
+                "word" to vocabulary.word,
+                "meaning" to vocabulary.vietnameseMeaning,
+                "descriptionEnglish" to vocabulary.englishDefinition,
+                "pronunciation" to vocabulary.phonetic,
+                "pos" to vocabulary.partOfSpeech,
+                "voiceUrl" to vocabulary.soundUrl,
+                "note" to vocabulary.note,
+                "example" to vocabulary.example,
+                "deckId" to vocabulary.deckId,
+                "level" to (vocabulary.level ?: "")
+            )
+            database.getReference("decks").child(deckId)
+                .child("vocabularies").child(vocabulary.id)
+                .setValue(vocabData).await()
+            Log.d("FirebaseDB", "Saved vocabulary '${vocabulary.word}' to deck $deckId")
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error saving vocabulary to deck: ${e.message}")
         }
     }
 
