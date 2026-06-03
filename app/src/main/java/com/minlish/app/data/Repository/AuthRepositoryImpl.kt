@@ -23,15 +23,15 @@ class AuthRepositoryImpl @Inject constructor(
 
         if (result.isSuccess) {
             val user = result.getOrNull()!!
-            // Cap nhat session
             userSession.refreshSession()
-            // Dam bao user co day du cac field trong DB
             firebaseDatabaseService.createUserIfNotExists(
                 uid = user.id,
                 name = user.name,
                 email = email
             )
-            _currentUser.value = user
+            // Doc lai user tu Database de co day du thong tin (tags, userProfile, userSetting)
+            val fullUser = firebaseDatabaseService.getUserFromSnapshot(user.id)
+            _currentUser.value = fullUser ?: user
         }
 
         return result
@@ -42,14 +42,14 @@ class AuthRepositoryImpl @Inject constructor(
 
         if (result.isSuccess) {
             val user = result.getOrNull()!!
-            // Cap nhat session
             userSession.refreshSession()
             firebaseDatabaseService.createUserIfNotExists(
                 uid = user.id,
                 name = name,
                 email = email
             )
-            _currentUser.value = user
+            val fullUser = firebaseDatabaseService.getUserFromSnapshot(user.id)
+            _currentUser.value = fullUser ?: user
         }
 
         return result
@@ -60,14 +60,14 @@ class AuthRepositoryImpl @Inject constructor(
 
         if (result.isSuccess) {
             val user = result.getOrNull()!!
-            // Cap nhat session
             userSession.refreshSession()
             firebaseDatabaseService.createUserIfNotExists(
                 uid = user.id,
                 name = user.name,
                 email = user.account.email
             )
-            _currentUser.value = user
+            val fullUser = firebaseDatabaseService.getUserFromSnapshot(user.id)
+            _currentUser.value = fullUser ?: user
         }
 
         return result

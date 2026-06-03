@@ -47,19 +47,19 @@ class FirebaseDatabaseService @Inject constructor() {
                     "password" to ""
                 ),
                 "userProfile" to mapOf(
-                    "learningGoal" to emptyList<String>(),
+                    "tags" to emptyList<String>(),
                     "initialLevel" to InitialLevel.B1.value,
                     "emailNotification" to false,
-                    "dailyReminder" to true,
-                    "spacedRepetition" to true
+                    "dailyReminder" to false,
+                    "spacedRepetition" to false,
+                    "avatarIndex" to 0,
+                    "wordsLearned" to 0,
+                    "streak" to 0
                 ),
                 "userSetting" to mapOf(
-                    "dailyNewWordGoal" to 10,
-                    "dailyReviewGoal" to 50
-                ),
-                "avatarIndex" to 0,
-                "wordsLearned" to 0,
-                "streak" to 0
+                    "dailyNewWordGoal" to 0,
+                    "dailyReviewGoal" to 0
+                )
             )
             userRef.setValue(userData).await()
         } else {
@@ -86,12 +86,12 @@ class FirebaseDatabaseService @Inject constructor() {
         }
         val currentInitialLevel = snapshot.child("userProfile/initialLevel").getValue(String::class.java) ?: InitialLevel.B1.value
         val currentEmailNotification = snapshot.child("userProfile/emailNotification").getValue(Boolean::class.java) ?: false
-        val currentDailyReminder = snapshot.child("userProfile/dailyReminder").getValue(Boolean::class.java) ?: true
-        val currentSpacedRepetition = snapshot.child("userProfile/spacedRepetition").getValue(Boolean::class.java) ?: true
+        val currentDailyReminder = snapshot.child("userProfile/dailyReminder").getValue(Boolean::class.java) ?: false
+        val currentSpacedRepetition = snapshot.child("userProfile/spacedRepetition").getValue(Boolean::class.java) ?: false
         
         // UserSetting
-        val currentDailyNewWordGoal = snapshot.child("userSetting/dailyNewWordGoal").getValue(Int::class.java) ?: 10
-        val currentDailyReviewGoal = snapshot.child("userSetting/dailyReviewGoal").getValue(Int::class.java) ?: 50
+        val currentDailyNewWordGoal = snapshot.child("userSetting/dailyNewWordGoal").getValue(Int::class.java) ?: 0
+        val currentDailyReviewGoal = snapshot.child("userSetting/dailyReviewGoal").getValue(Int::class.java) ?: 0
         
         // Cap nhat account
         updates["account"] = mapOf(
@@ -99,26 +99,29 @@ class FirebaseDatabaseService @Inject constructor() {
             "password" to ""
         )
         
-        // Cap nhat userProfile
+        // Cap nhat userProfile - dong bo voi schema moi
         updates["userProfile"] = mapOf(
-            "learningGoal" to currentLearningGoal,
+            "tags" to currentLearningGoal,
             "initialLevel" to currentInitialLevel,
             "emailNotification" to currentEmailNotification,
             "dailyReminder" to currentDailyReminder,
-            "spacedRepetition" to currentSpacedRepetition
+            "spacedRepetition" to currentSpacedRepetition,
+            "avatarIndex" to currentAvatarIndex,
+            "wordsLearned" to currentWordsLearned,
+            "streak" to currentStreak
         )
         
-        // Cap nhat userSetting
+        // Cap nhat userSetting - dong bo voi schema moi
         updates["userSetting"] = mapOf(
             "dailyNewWordGoal" to currentDailyNewWordGoal,
             "dailyReviewGoal" to currentDailyReviewGoal
         )
         
-        // Cap nhat cac field khac
+        // Xoa cac field cu nam ngoai userProfile
+        updates["avatarIndex"] = null
+        updates["wordsLearned"] = null
+        updates["streak"] = null
         updates["name"] = currentName
-        updates["avatarIndex"] = currentAvatarIndex
-        updates["wordsLearned"] = currentWordsLearned
-        updates["streak"] = currentStreak
         
         // Xoa cac field cu (nam o top-level)
         updates["email"] = null
@@ -134,7 +137,22 @@ class FirebaseDatabaseService @Inject constructor() {
 
     suspend fun getUserFromSnapshot(uid: String): User? {
         val snapshot = usersRef.child(uid).get().await()
-        return snapshot.toUser()
+        val user = snapshot.toUser()
+        
+        // Auto-migrate: neu tags rong nhung co learningGoal, tu dong sync sang tags
+        if (user != null && user.userProfile.tags.isEmpty()) {
+            val learningGoalSnapshot = snapshot.child("userProfile/learningGoal")
+            if (learningGoalSnapshot.hasChildren()) {
+                val learningGoals = learningGoalSnapshot.children.mapNotNull { 
+                    it.getValue(String::class.java) 
+                }
+                if (learningGoals.isNotEmpty()) {
+                    usersRef.child(uid).child("userProfile").child("tags").setValue(learningGoals).await()
+                }
+            }
+        }
+        
+        return user
     }
 
     fun observeUser(uid: String): Flow<DataSnapshot?> = callbackFlow {
@@ -161,11 +179,24 @@ class FirebaseDatabaseService @Inject constructor() {
 
     private fun DataSnapshot.toUser(): User? {
         return try {
+            // Doc tu field "tags" thay vi "learningGoal"
+            val tagStrings = child("userProfile/tags").children.mapNotNull {
+                it.getValue(String::class.java)
+            }
+            val tags = tagStrings.mapNotNull { value ->
+                LearningGoal.entries.find { it.value == value }
+            }
+            
+            // Hoac doc tu field cu "learningGoal" de ho tro migration
             val learningGoalStrings = child("userProfile/learningGoal").children.mapNotNull {
                 it.getValue(String::class.java)
             }
-            val learningGoals = learningGoalStrings.mapNotNull { value ->
-                LearningGoal.entries.find { it.value == value }
+            val learningGoals = if (tags.isEmpty() && learningGoalStrings.isNotEmpty()) {
+                learningGoalStrings.mapNotNull { value ->
+                    LearningGoal.entries.find { it.value == value }
+                }
+            } else {
+                tags
             }
             
             val initialLevelValue = child("userProfile/initialLevel").getValue(String::class.java) ?: "B1"
@@ -179,19 +210,19 @@ class FirebaseDatabaseService @Inject constructor() {
                     password = child("account/password").getValue(String::class.java) ?: ""
                 ),
                 userProfile = UserProfile(
-                    learningGoal = learningGoals,
                     initialLevel = initialLevel,
                     emailNotification = child("userProfile/emailNotification").getValue(Boolean::class.java) ?: false,
-                    dailyReminder = child("userProfile/dailyReminder").getValue(Boolean::class.java) ?: true,
-                    spacedRepetition = child("userProfile/spacedRepetition").getValue(Boolean::class.java) ?: true
+                    dailyReminder = child("userProfile/dailyReminder").getValue(Boolean::class.java) ?: false,
+                    spacedRepetition = child("userProfile/spacedRepetition").getValue(Boolean::class.java) ?: false,
+                    avatarIndex = child("userProfile/avatarIndex").getValue(Int::class.java) ?: 0,
+                    wordsLearned = child("userProfile/wordsLearned").getValue(Int::class.java) ?: 0,
+                    streak = child("userProfile/streak").getValue(Int::class.java) ?: 0,
+                    tags = learningGoals
                 ),
                 userSetting = UserSetting(
-                    dailyNewWordGoal = child("userSetting/dailyNewWordGoal").getValue(Int::class.java) ?: 10,
-                    dailyReviewGoal = child("userSetting/dailyReviewGoal").getValue(Int::class.java) ?: 50
-                ),
-                avatarIndex = child("avatarIndex").getValue(Int::class.java) ?: 0,
-                wordsLearned = child("wordsLearned").getValue(Int::class.java) ?: 0,
-                streak = child("streak").getValue(Int::class.java) ?: 0
+                    dailyNewWordGoal = child("userSetting/dailyNewWordGoal").getValue(Int::class.java) ?: 0,
+                    dailyReviewGoal = child("userSetting/dailyReviewGoal").getValue(Int::class.java) ?: 0
+                )
             )
         } catch (e: Exception) {
             null
