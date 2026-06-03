@@ -114,8 +114,9 @@ fun LearnScreen(
                 ) {
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    val wordsLeft = items.size - learnedCount
-                    val progress = if (items.isNotEmpty()) learnedCount.toFloat() / items.size else 1f
+                    val progress = if (items.isNotEmpty()) {
+                        if (mode == LearnMode.SRS) currentIndex.toFloat() / items.size else learnedCount.toFloat() / items.size
+                    } else 1f
                     val progressPercent = (progress * 100).toInt()
 
                     Row(
@@ -124,13 +125,13 @@ fun LearnScreen(
                         verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
-                            text = if (mode == LearnMode.SRS) "Tiến độ hôm nay" else "$wordsLeft words left",
+                            text = if (mode == LearnMode.SRS) "Tiến độ hôm nay" else "${items.size - learnedCount} words left",
                             style = BunnyTypography.LabelMd,
                             color = if (mode == LearnMode.SRS) BunnyColors.Primary else BunnyColors.OnSurfaceVariant,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (mode == LearnMode.SRS) "$learnedCount/${items.size}" else "$progressPercent%",
+                            text = if (mode == LearnMode.SRS) "$currentIndex/${items.size}" else "$progressPercent%",
                             style = BunnyTypography.LabelMd,
                             color = if (mode == LearnMode.SRS) BunnyColors.OnSurfaceVariant else BunnyColors.Primary,
                             fontWeight = FontWeight.Bold
@@ -203,7 +204,7 @@ fun LearnScreen(
                         label = "CardContentTransition"
                     ) { (state, completed) ->
                         val vocab = state.second
-                        if (completed) {
+                        if (completed || items.isEmpty()) {
                             Column(
                                 modifier = Modifier.fillMaxSize(),
                                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -217,14 +218,14 @@ fun LearnScreen(
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
-                                    text = "Hoàn thành bộ từ!",
+                                    text = if (items.isEmpty()) "Tuyệt vời!" else "Hoàn thành bộ từ!",
                                     style = BunnyTypography.HeadlineMd,
                                     color = BunnyColors.OnSurface,
                                     fontWeight = FontWeight.ExtraBold
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Bạn đã hoàn thành tất cả từ vựng trong bộ này.",
+                                    text = if (items.isEmpty()) "Không có từ vựng nào cần ôn tập hôm nay." else "Bạn đã hoàn thành tất cả từ vựng trong bộ này.",
                                     textAlign = TextAlign.Center,
                                     style = BunnyTypography.BodyMd,
                                     color = BunnyColors.Outline,
@@ -242,13 +243,15 @@ fun LearnScreen(
                                     ) {
                                         Text("Thoát", style = BunnyTypography.LabelMd)
                                     }
-                                    Button(
-                                        onClick = { viewModel.restartLearning() },
-                                        modifier = Modifier.weight(1f).height(48.dp),
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = BunnyColors.Primary)
-                                    ) {
-                                        Text("Xem lại", style = BunnyTypography.LabelMd, color = Color.White)
+                                    if (items.isNotEmpty()) {
+                                        Button(
+                                            onClick = { viewModel.restartLearning() },
+                                            modifier = Modifier.weight(1f).height(48.dp),
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = BunnyColors.Primary)
+                                        ) {
+                                            Text("Xem lại", style = BunnyTypography.LabelMd, color = Color.White)
+                                        }
                                     }
                                 }
                             }

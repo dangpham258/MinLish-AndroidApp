@@ -17,6 +17,8 @@ import kotlinx.coroutines.tasks.await
 import android.util.Log
 import java.util.Date
 import java.util.UUID
+import java.util.Calendar
+import com.minlish.app.domain.model.enumration.EaseFactor
 import com.minlish.app.domain.model.Deck
 import com.minlish.app.domain.model.Vocabulary
 import com.minlish.app.domain.model.UserVocabularyState
@@ -435,6 +437,7 @@ class FirebaseDatabaseService @Inject constructor() {
 
                     Vocabulary(
                         id = id,
+                        deckId = deckId,
                         word = word,
                         phonetic = pronunciation,
                         vietnameseMeaning = meaning,
@@ -554,6 +557,266 @@ class FirebaseDatabaseService @Inject constructor() {
             database.getReference("reviewHistories").child(userId).child(reviewId).setValue(historyData).await()
         } catch (e: Exception) {
             Log.e("FirebaseDB", "Error syncing review history: ${e.message}")
+        }
+    }
+
+    suspend fun getUserProgress(userId: String): com.minlish.app.presentation.dashboard.model.UserProgress? {
+        return try {
+            val snapshot = usersRef.child(userId).get().await()
+            if (snapshot.exists()) {
+                val wordsLearned = snapshot.child("wordsLearned").getValue(Int::class.java) 
+                    ?: snapshot.child("userProfile/wordsLearned").getValue(Int::class.java) 
+                    ?: 0
+                val streak = snapshot.child("streak").getValue(Int::class.java)
+                    ?: snapshot.child("userProfile/streak").getValue(Int::class.java) 
+                    ?: 0
+                
+                val currentLevel = calculateLevel(wordsLearned)
+                val progressPercent = ((wordsLearned % 1000) / 10)
+                
+                val statesSnapshot = database.getReference("vocabularyStates").child(userId).get().await()
+                var totalStatesCount = 0
+                var retainedStatesCount = 0
+                if (statesSnapshot.exists()) {
+                    for (stateChild in statesSnapshot.children) {
+                        totalStatesCount++
+                        val ease = stateChild.child("easeFactor").getValue(Double::class.java) ?: 2.5
+                        if (ease >= 2.0) {
+                            retainedStatesCount++
+                        }
+                    }
+                }
+                val retentionRate = if (totalStatesCount > 0) {
+                    ((retainedStatesCount.toFloat() / totalStatesCount) * 100).toInt().coerceAtMost(100)
+                } else {
+                    85
+                }
+
+                com.minlish.app.presentation.dashboard.model.UserProgress(
+                    currentLevelName = mapLevelToName(currentLevel),
+                    levelProgress = progressPercent,
+                    nextLevelName = getNextLevelName(currentLevel),
+                    wordsCount = wordsLearned,
+                    streak = streak,
+                    retentionRate = retentionRate
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error getting user progress: ${e.message}")
+            null
+        }
+    }
+
+    suspend fun saveUserProgress(userId: String, progress: com.minlish.app.presentation.dashboard.model.UserProgress) {
+        try {
+            val updates = mapOf(
+                "wordsLearned" to progress.wordsCount,
+                "streak" to progress.streak,
+                "userProfile/wordsLearned" to progress.wordsCount,
+                "userProfile/streak" to progress.streak
+            )
+            usersRef.child(userId).updateChildren(updates).await()
+            Log.d("FirebaseDB", "Saved user progress successfully")
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error saving user progress: ${e.message}")
+        }
+    }
+
+    suspend fun getReviewHistories(userId: String): List<ReviewHistory>? {
+        return try {
+            val snapshot = database.getReference("reviewHistories").child(userId).get().await()
+            if (snapshot.exists()) {
+                snapshot.children.mapNotNull { child ->
+                    try {
+                        val id = child.child("id").getValue(String::class.java) ?: child.key ?: ""
+                        val vocabId = child.child("vocabId").getValue(String::class.java) ?: ""
+                        val ratingStr = child.child("rating").getValue(String::class.java) ?: "GOOD"
+                        val rating = try { EaseFactor.valueOf(ratingStr) } catch (e: Exception) { EaseFactor.GOOD }
+                        
+                        val timeSnapshot = child.child("learningTime")
+                        val timeLong = if (timeSnapshot.hasChild("time")) {
+                            timeSnapshot.child("time").getValue(Long::class.java) ?: System.currentTimeMillis()
+                        } else {
+                            timeSnapshot.getValue(Long::class.java) ?: System.currentTimeMillis()
+                        }
+                        
+                        ReviewHistory(
+                            id = id,
+                            vocabId = vocabId,
+                            learningTime = Date(timeLong),
+                            rating = rating
+                        )
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error getting review histories: ${e.message}")
+            null
+        }
+    }
+
+    suspend fun saveReviewHistory(userId: String, history: ReviewHistory) {
+        try {
+            val key = history.id.ifBlank { database.getReference("reviewHistories").child(userId).push().key ?: java.util.UUID.randomUUID().toString() }
+            val historyData = mapOf(
+                "id" to key,
+                "vocabId" to history.vocabId,
+                "rating" to history.rating.name,
+                "learningTime" to mapOf(
+                    "time" to history.learningTime.time,
+                    "date" to history.learningTime.date,
+                    "day" to history.learningTime.day,
+                    "hours" to history.learningTime.hours,
+                    "minutes" to history.learningTime.minutes,
+                    "month" to history.learningTime.month,
+                    "seconds" to history.learningTime.seconds,
+                    "year" to history.learningTime.year,
+                    "timezoneOffset" to history.learningTime.timezoneOffset
+                )
+            )
+            database.getReference("reviewHistories").child(userId).child(key).setValue(historyData).await()
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error saving review history: ${e.message}")
+        }
+    }
+
+    suspend fun initializeEverythingWithFullData(userId: String) {
+        try {
+            val userSnapshot = usersRef.child(userId).get().await()
+            if (!userSnapshot.exists()) {
+                val userData = mapOf(
+                    "id" to userId,
+                    "name" to "Bunny Learner",
+                    "userProfile" to mapOf(
+                        "initialLevel" to "B1",
+                        "wordsLearned" to 0,
+                        "streak" to 0,
+                        "avatarIndex" to 1
+                    ),
+                    "userSetting" to mapOf(
+                        "dailyNewWordGoal" to 10,
+                        "dailyReviewGoal" to 30
+                    ),
+                    "wordsLearned" to 0,
+                    "streak" to 0
+                )
+                usersRef.child(userId).setValue(userData).await()
+            }
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error initializing database: ${e.message}")
+        }
+    }
+
+    suspend fun getDailyPlanTelemetry(userId: String): com.minlish.app.presentation.dashboard.model.DailyPlanTelemetry {
+        return try {
+            val statesSnapshot = database.getReference("vocabularyStates").child(userId).get().await()
+            val learnedVocabIds = mutableSetOf<String>()
+            var reviewsCount = 0
+
+            val nowMs = System.currentTimeMillis()
+            val todayEndCal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 23)
+                set(Calendar.MINUTE, 59)
+                set(Calendar.SECOND, 59)
+                set(Calendar.MILLISECOND, 999)
+            }
+            val todayEndMs = todayEndCal.timeInMillis
+
+            if (statesSnapshot.exists()) {
+                for (stateChild in statesSnapshot.children) {
+                    val vocabId = stateChild.child("vocabId").getValue(String::class.java) ?: stateChild.key ?: ""
+                    if (vocabId.isNotEmpty()) {
+                        learnedVocabIds.add(vocabId)
+                        
+                        val nextReviewSnapshot = stateChild.child("nextReview")
+                        val nextReviewTime = if (nextReviewSnapshot.hasChild("time")) {
+                            nextReviewSnapshot.child("time").getValue(Long::class.java) ?: nowMs
+                        } else {
+                            nextReviewSnapshot.getValue(Long::class.java) ?: nowMs
+                        }
+
+                        if (nextReviewTime <= todayEndMs) {
+                            reviewsCount++
+                        }
+                    }
+                }
+            }
+
+            val decksSnapshot = database.getReference("decks").get().await()
+            var newWordsCount = 0
+
+            if (decksSnapshot.exists()) {
+                for (deckChild in decksSnapshot.children) {
+                    val createId = deckChild.child("createId").getValue(String::class.java) ?: ""
+                    val isPublic = deckChild.child("isPublic").getValue(Boolean::class.java) ?: false
+                    
+                    if (createId == userId || isPublic) {
+                        val deckVocabIds = mutableSetOf<String>()
+                        deckChild.child("vocabularies").children.forEach { vChild ->
+                            val vId = vChild.child("id").getValue(String::class.java) ?: vChild.key ?: ""
+                            if (vId.isNotEmpty()) {
+                                deckVocabIds.add(vId)
+                            }
+                        }
+
+                        val learnedInDeck = deckVocabIds.filter { it in learnedVocabIds }.size
+
+                        if (learnedInDeck > 0 && learnedInDeck < deckVocabIds.size) {
+                            val remainingInDeck = deckVocabIds.size - learnedInDeck
+                            newWordsCount += remainingInDeck
+                        }
+                    }
+                }
+            }
+
+            com.minlish.app.presentation.dashboard.model.DailyPlanTelemetry(
+                newWordsCount = newWordsCount,
+                reviewWordsCount = reviewsCount
+            )
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error getting daily plan telemetry: ${e.message}")
+            com.minlish.app.presentation.dashboard.model.DailyPlanTelemetry(0, 0)
+        }
+    }
+
+    private fun calculateLevel(wordsLearned: Int): String {
+        return when {
+            wordsLearned < 1000 -> "A1"
+            wordsLearned < 2000 -> "A2"
+            wordsLearned < 3000 -> "B1"
+            wordsLearned < 4000 -> "B2"
+            wordsLearned < 5000 -> "C1"
+            else -> "C2"
+        }
+    }
+
+    private fun mapLevelToName(level: String): String {
+        return when(level.uppercase()) {
+            "A1" -> "Người Mới Bắt Đầu"
+            "A2" -> "Sơ Cấp"
+            "B1" -> "Trung Cấp"
+            "B2" -> "Trung Cao Cấp"
+            "C1" -> "Cao Cấp"
+            "C2" -> "Thành Thạo"
+            else -> "Người Mới Bắt Đầu"
+        }
+    }
+
+    private fun getNextLevelName(level: String): String {
+        return when(level.uppercase()) {
+            "A1" -> "Sơ Cấp (A2)"
+            "A2" -> "Trung Cấp (B1)"
+            "B1" -> "Trung Cao Cấp (B2)"
+            "B2" -> "Cao Cấp (C1)"
+            "C1" -> "Thành Thạo (C2)"
+            "C2" -> "Hoàn thành"
+            else -> "Sơ Cấp (A2)"
         }
     }
 }

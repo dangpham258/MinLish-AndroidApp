@@ -54,7 +54,15 @@ fun NavGraphBuilder.studyMethodNavGraph(navController: NavHostController) {
             LearnScreen(
                 viewModel = learnViewModel,
                 mode = LearnMode.SRS,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = {
+                    if (deckId == "all_due") {
+                        navController.navigate(Screen.Dashboard.route) {
+                            popUpTo(Screen.Dashboard.route) { inclusive = true }
+                        }
+                    } else {
+                        navController.popBackStack()
+                    }
+                }
             )
         }
 

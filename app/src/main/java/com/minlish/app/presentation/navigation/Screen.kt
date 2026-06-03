@@ -9,6 +9,7 @@ sealed class Screen(val route: String) {
         fun createRoute(oobCode: String) = "reset_password/$oobCode"
     }
     object Main : Screen("main")
+    object Dashboard : Screen("dashboard")
     
     // Deck and Learning routes
     object ListOfDeck : Screen("list_of_deck")

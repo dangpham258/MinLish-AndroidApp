@@ -20,6 +20,8 @@ import com.minlish.app.presentation.auth.ui.ResetPasswordScreen
 import com.minlish.app.presentation.auth.ui.SignUpScreen
 import com.minlish.app.presentation.auth.viewmodel.AuthViewModel
 import com.minlish.app.presentation.main.MainScreen
+import com.minlish.app.presentation.dashboard.ui.BunnyStatisticsScreen
+import com.minlish.app.presentation.dashboard.viewmodel.StatisticsViewModel
 
 @Composable
 fun AppNavHost(
@@ -53,7 +55,7 @@ fun AppNavHost(
             composable(Screen.Login.route) {
                 LoginScreen(
                     onLoginSuccess = {
-                        navController.navigate(Screen.ListOfDeck.route) {
+                        navController.navigate(Screen.Dashboard.route) {
                             popUpTo(Screen.Auth.route) { inclusive = true }
                         }
                     },
@@ -72,7 +74,7 @@ fun AppNavHost(
                         navController.popBackStack()
                     },
                     onSignUpSuccess = {
-                        navController.navigate(Screen.ListOfDeck.route) {
+                        navController.navigate(Screen.Dashboard.route) {
                             popUpTo(Screen.Auth.route) { inclusive = true }
                         }
                     }
@@ -123,7 +125,15 @@ fun AppNavHost(
         }
 
         composable(Screen.Main.route) {
-            MainScreen()
+            MainScreen(navController = navController)
+        }
+
+        composable(Screen.Dashboard.route) {
+            val statsViewModel: StatisticsViewModel = hiltViewModel()
+            BunnyStatisticsScreen(
+                viewModel = statsViewModel,
+                navController = navController
+            )
         }
 
         deckNavGraph(navController)

@@ -40,6 +40,14 @@ interface BunnyRepository {
     fun getStreakDaysCount(): Flow<Int>
     suspend fun incrementStreak()
     suspend fun notifyNewWordLearned(vocabularyId: String)
+    
+    // Dashboard / Stats Sync (MVVM)
+    suspend fun getUserProgress(userId: String): com.minlish.app.presentation.dashboard.model.UserProgress?
+    suspend fun saveUserProgress(userId: String, progress: com.minlish.app.presentation.dashboard.model.UserProgress)
+    suspend fun getReviewHistories(userId: String): List<ReviewHistory>?
+    suspend fun saveReviewHistory(userId: String, history: ReviewHistory)
+    suspend fun initializeEverythingWithFullData(userId: String)
+    suspend fun getDailyPlanTelemetry(userId: String): com.minlish.app.presentation.dashboard.model.DailyPlanTelemetry
 
     // Review History
     fun getReviewHistory(vocabularyId: String): Flow<List<ReviewHistory>>

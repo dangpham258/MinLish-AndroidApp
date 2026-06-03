@@ -41,7 +41,9 @@ import com.minlish.app.presentation.theme.DeckTypography
 fun ListOfDeckScreen(
     viewModel: DeckViewModel,
     onNavigateToDeckDetail: (String) -> Unit,
-    onNavigateToCreateDeck: () -> Unit
+    onNavigateToCreateDeck: () -> Unit,
+    onNavigateToDashboard: () -> Unit,
+    onNavigateToProfile: () -> Unit
 ) {
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
@@ -179,7 +181,16 @@ fun ListOfDeckScreen(
             BunnyAppBar(title = "Bunny English", onBackClick = null)
         },
         bottomBar = {
-            BunnyBottomNavBar(selectedTab = BunnyTab.LESSONS, onTabSelected = { })
+            BunnyBottomNavBar(
+                selectedTab = BunnyTab.LESSONS,
+                onTabSelected = { tab ->
+                    when (tab) {
+                        BunnyTab.LESSONS -> { /* already here */ }
+                        BunnyTab.STATS -> onNavigateToDashboard()
+                        BunnyTab.PROFILE -> onNavigateToProfile()
+                    }
+                }
+            )
         },
         floatingActionButton = {
             FloatingActionButton(

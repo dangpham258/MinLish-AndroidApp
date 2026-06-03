@@ -88,19 +88,34 @@ open class LearnViewModel @Inject constructor(
                 }
             }
             
-            val deck = repository.getDeckById(deckId)
+            val isAllDue = deckId == "all_due"
+            val deck = if (isAllDue) {
+                Deck(
+                    id = "all_due",
+                    name = "Daily Review",
+                    description = "Review vocabularies scheduled for today",
+                    vocabularyIds = emptyList()
+                )
+            } else {
+                repository.getDeckById(deckId)
+            }
+            
             if (deck != null) {
                 _selectedDeck.value = deck
                 
-                // Khôi phục tiến độ cũ từ Local trước khi bắt đầu
-                val savedProgress = repository.getDeckProgressEntity(deckId)
                 learnedIds.clear()
-                if (savedProgress != null && savedProgress.learnedVocabularyIds.isNotBlank()) {
-                    val ids = savedProgress.learnedVocabularyIds.split(",").toSet()
-                    learnedIds.addAll(ids)
-                    _learnedCount.value = learnedIds.size
-                } else {
+                if (isAllDue) {
                     _learnedCount.value = 0
+                } else {
+                    // Khôi phục tiến độ cũ từ Local trước khi bắt đầu
+                    val savedProgress = repository.getDeckProgressEntity(deckId)
+                    if (savedProgress != null && savedProgress.learnedVocabularyIds.isNotBlank()) {
+                        val ids = savedProgress.learnedVocabularyIds.split(",").toSet()
+                        learnedIds.addAll(ids)
+                        _learnedCount.value = learnedIds.size
+                    } else {
+                        _learnedCount.value = 0
+                    }
                 }
 
                 _currentCardIndex.value = 0
@@ -109,7 +124,21 @@ open class LearnViewModel @Inject constructor(
                 _isSrsCardFlipped.value = false
                 _isCompleted.value = false
                 
-                repository.getVocabularyByDeck(deck.id, deck.vocabularyIds).collect { vocabList ->
+                val todayEndCal = java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, 23)
+                    set(java.util.Calendar.MINUTE, 59)
+                    set(java.util.Calendar.SECOND, 59)
+                    set(java.util.Calendar.MILLISECOND, 999)
+                }
+                val todayEndMs = todayEndCal.timeInMillis
+
+                val vocabFlow = if (isAllDue) {
+                    repository.getVocabularyDueForReview(todayEndMs)
+                } else {
+                    repository.getVocabularyByDeck(deck.id, deck.vocabularyIds)
+                }
+
+                vocabFlow.collect { vocabList ->
                     progressJob.cancel()
                     val current = (_loadingProgress.value * 100).toInt()
                     for (i in current..100) {
@@ -125,6 +154,7 @@ open class LearnViewModel @Inject constructor(
                     _isLoading.value = false
                 }
             } else {
+                progressJob.cancel()
                 _isLoading.value = false
             }
         }
@@ -182,6 +212,7 @@ open class LearnViewModel @Inject constructor(
 
     private fun saveProgressLocally() {
         val deckId = _selectedDeck.value?.id ?: return
+        if (deckId == "all_due") return
         val total = _vocabularies.value.size
         if (total == 0) return
         
@@ -239,10 +270,11 @@ open class LearnViewModel @Inject constructor(
 
     fun submitSrsGrade(vocabId: String, grade: EaseFactor) {
         viewModelScope.launch {
-            val deckId = _selectedDeck.value?.id ?: ""
+            val currentVocab = _dueVocabularies.value.getOrNull(_currentSrsIndex.value)
+            val vocabDeckId = currentVocab?.deckId ?: _selectedDeck.value?.id ?: ""
             val currentState = repository.getUserVocabularyState(vocabId) ?: UserVocabularyState(
                 vocabId = vocabId,
-                deckId = deckId
+                deckId = vocabDeckId
             )
             val updatedState = calculateSrsUseCase(currentState, grade, System.currentTimeMillis())
             repository.saveUserVocabularyState(updatedState, grade)

@@ -10,6 +10,7 @@ import com.minlish.app.domain.repository.BunnyRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
 import java.util.*
 
 class BunnyRepositoryImpl(
@@ -132,7 +133,69 @@ class BunnyRepositoryImpl(
     }
     override suspend fun getVocabularyByIdDirect(id: String): Vocabulary? = null
     override fun getActiveUserVocabularyStates(): Flow<List<UserVocabularyState>> = flow { emit(emptyList()) }
-    override fun getVocabularyDueForReview(currentTime: Long, deckId: String?): Flow<List<Vocabulary>> = flow { emit(emptyList()) }
+    override fun getVocabularyDueForReview(currentTime: Long, deckId: String?): Flow<List<Vocabulary>> = flow {
+        val userId = getCurrentUserId()
+        try {
+            val snapshot = com.google.firebase.database.FirebaseDatabase.getInstance()
+                .getReference("vocabularyStates").child(userId).get().await()
+            if (!snapshot.exists()) {
+                emit(emptyList())
+                return@flow
+            }
+            
+            val dueStates = snapshot.children.mapNotNull { child ->
+                try {
+                    val vocabId = child.child("vocabId").getValue(String::class.java) ?: child.key ?: ""
+                    if (vocabId.isEmpty()) return@mapNotNull null
+                    
+                    val nextReviewSnapshot = child.child("nextReview")
+                    val nextReviewTime = if (nextReviewSnapshot.hasChild("time")) {
+                        nextReviewSnapshot.child("time").getValue(Long::class.java) ?: System.currentTimeMillis()
+                    } else {
+                        nextReviewSnapshot.getValue(Long::class.java) ?: System.currentTimeMillis()
+                    }
+                    
+                    val stateDeckId = child.child("deckId").getValue(String::class.java) ?: ""
+                    
+                    if (deckId != null && deckId.isNotBlank() && stateDeckId != deckId) {
+                        return@mapNotNull null
+                    }
+                    
+                    if (nextReviewTime > currentTime) {
+                        return@mapNotNull null
+                    }
+                    
+                    UserVocabularyState(
+                        vocabId = vocabId,
+                        deckId = stateDeckId,
+                        interval = child.child("interval").getValue(Double::class.java) ?: 1.0,
+                        repetition = child.child("repetition").getValue(Int::class.java) ?: 0,
+                        easeFactor = child.child("easeFactor").getValue(Double::class.java) ?: 2.5,
+                        nextReview = Date(nextReviewTime)
+                    )
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            
+            if (dueStates.isEmpty()) {
+                emit(emptyList())
+                return@flow
+            }
+            
+            val grouped = dueStates.groupBy { it.deckId.ifBlank { "deck_minlish_01" } }
+            val allVocabularies = mutableListOf<Vocabulary>()
+            for ((dId, states) in grouped) {
+                val vocabIds = states.map { it.vocabId }
+                val vocabs = firebaseService.getVocabularyByDeck(dId, vocabIds)
+                allVocabularies.addAll(vocabs)
+            }
+            emit(allVocabularies)
+        } catch (e: Exception) {
+            android.util.Log.e("BunnyRepositoryImpl", "Error getting due vocabularies: ${e.message}")
+            emit(emptyList())
+        }
+    }
     override fun getNewVocabularyForLearning(deckId: String?, limit: Int): Flow<List<Vocabulary>> = flow { emit(emptyList()) }
     
     override suspend fun getUserVocabularyState(vocabularyId: String): UserVocabularyState? {
@@ -157,4 +220,28 @@ class BunnyRepositoryImpl(
     override fun getNotifications(): Flow<List<Notification>> = flow { emit(emptyList()) }
     override suspend fun addNotification(notification: Notification) {}
     override suspend fun prepopulateInitialData() {}
+
+    override suspend fun getUserProgress(userId: String): com.minlish.app.presentation.dashboard.model.UserProgress? {
+        return firebaseService.getUserProgress(userId)
+    }
+
+    override suspend fun saveUserProgress(userId: String, progress: com.minlish.app.presentation.dashboard.model.UserProgress) {
+        firebaseService.saveUserProgress(userId, progress)
+    }
+
+    override suspend fun getReviewHistories(userId: String): List<ReviewHistory>? {
+        return firebaseService.getReviewHistories(userId)
+    }
+
+    override suspend fun saveReviewHistory(userId: String, history: ReviewHistory) {
+        firebaseService.saveReviewHistory(userId, history)
+    }
+
+    override suspend fun initializeEverythingWithFullData(userId: String) {
+        firebaseService.initializeEverythingWithFullData(userId)
+    }
+
+    override suspend fun getDailyPlanTelemetry(userId: String): com.minlish.app.presentation.dashboard.model.DailyPlanTelemetry {
+        return firebaseService.getDailyPlanTelemetry(userId)
+    }
 }
