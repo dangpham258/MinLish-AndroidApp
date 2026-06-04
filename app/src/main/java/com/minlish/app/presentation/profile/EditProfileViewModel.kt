@@ -47,26 +47,25 @@ class EditProfileViewModel @Inject constructor(
     fun updateFullProfile(newName: String, newLevel: InitialLevel, newAvatarIdx: Int) {
         viewModelScope.launch {
             try {
-                val userToSave = currentUser?.copy(
-                    id = currentUser?.id ?: "",
+                val user = currentUser ?: return@launch
+                userRepository.updateProfileBasics(
+                    uid = user.id,
                     name = newName,
-                    userProfile = (currentUser?.userProfile ?: UserProfile()).copy(
+                    initialLevel = newLevel.value,
+                    avatarIndex = newAvatarIdx
+                )
+                currentUser = user.copy(
+                    name = newName,
+                    userProfile = user.userProfile.copy(
                         initialLevel = newLevel,
                         avatarIndex = newAvatarIdx
                     )
-                ) ?: User(
-                    id = "",
-                    name = newName,
-                    userProfile = UserProfile(initialLevel = newLevel, avatarIndex = newAvatarIdx)
                 )
-
-                userRepository.saveUser(userToSave)
-                currentUser = userToSave
                 _name.value = newName
                 _level.value = newLevel.name
                 _levelTag.value = newLevel.name
                 _avatarIndex.value = newAvatarIdx
-                android.util.Log.d("EmailTest", "Profile updated for user ${userToSave.id}")
+                android.util.Log.d("EmailTest", "Profile updated for user ${user.id}")
             } catch (e: Exception) {
                 android.util.Log.e("EmailTest", "Profile update failed", e)
             }

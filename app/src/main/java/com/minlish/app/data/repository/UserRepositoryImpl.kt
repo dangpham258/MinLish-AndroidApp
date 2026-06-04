@@ -57,6 +57,20 @@ class UserRepositoryImpl @Inject constructor(
         ))
     }
 
+    override suspend fun updateProfileBasics(
+        uid: String,
+        name: String,
+        initialLevel: String,
+        avatarIndex: Int
+    ) {
+        if (uid.isBlank()) return
+        firebaseDatabaseService.updateUser(uid, mapOf(
+            "name" to name,
+            "userProfile/initialLevel" to initialLevel,
+            "userProfile/avatarIndex" to avatarIndex
+        ))
+    }
+
     override suspend fun updateUserField(email: String, path: String, value: Any) {
         val userId = resolveUserId(email)
         if (userId == null) {

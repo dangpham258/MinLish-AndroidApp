@@ -1,6 +1,10 @@
 package com.minlish.app.presentation.profile
 
+import android.Manifest
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +25,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -74,8 +80,19 @@ fun ProfileScreen(
     val dailyReminder by notificationViewModel.dailyReminder.collectAsState()
     val spacedRepetition by notificationViewModel.spacedRepetition.collectAsState()
     val selectedGoals by notificationViewModel.selectedGoals.collectAsState()
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) {
+            Toast.makeText(context, "Notification permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     // Đồng bộ dữ liệu khi user data tải xong từ Firebase
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshProfile()
+    }
+
     LaunchedEffect(userData) {
         userData?.let {
             editViewModel.loadProfile(it)
@@ -118,7 +135,9 @@ fun ProfileScreen(
                                 text = goal.displayName,
                                 isSelected = selectedGoals.contains(goal.name)
                             ) {
-                                notificationViewModel.toggleGoal(goal.name)
+                                notificationViewModel.toggleGoal(goal.name) {
+                                    viewModel.refreshProfile()
+                                }
                             }
                         }
                     }
@@ -129,7 +148,12 @@ fun ProfileScreen(
                     Text("Notification Settings", fontWeight = FontWeight.Bold, color = Color(0xFF424847), fontSize = 13.sp)
                     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                         Column {
-                            NotificationItem("Daily reminder", "Maintain study habits", Icons.Outlined.Alarm, Color(0xFFD0F0E8), PrimaryColor, dailyReminder) { notificationViewModel.setDailyReminder(it, email) }
+                            NotificationItem("Daily reminder", "Maintain study habits", Icons.Outlined.Alarm, Color(0xFFD0F0E8), PrimaryColor, dailyReminder) {
+                                if (it && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                                notificationViewModel.setDailyReminder(it, email)
+                            }
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color(0xFFF0F0F0))
                             NotificationItem("Spaced repetition", "Vocabulary review reminder", Icons.Outlined.Psychology, Color(0xFFD3E5F1), Color(0xFF50616B), spacedRepetition) { notificationViewModel.setSpacedRepetition(it) }
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color(0xFFF0F0F0))

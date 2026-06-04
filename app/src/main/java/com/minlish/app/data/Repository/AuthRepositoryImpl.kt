@@ -31,7 +31,9 @@ class AuthRepositoryImpl @Inject constructor(
             )
             // Doc lai user tu Database de co day du thong tin (tags, userProfile, userSetting)
             val fullUser = firebaseDatabaseService.getUserFromSnapshot(user.id)
-            _currentUser.value = fullUser ?: user
+            val resolvedUser = fullUser ?: user
+            _currentUser.value = resolvedUser
+            return Result.success(resolvedUser)
         }
 
         return result
@@ -49,7 +51,9 @@ class AuthRepositoryImpl @Inject constructor(
                 email = email
             )
             val fullUser = firebaseDatabaseService.getUserFromSnapshot(user.id)
-            _currentUser.value = fullUser ?: user
+            val resolvedUser = fullUser ?: user
+            _currentUser.value = resolvedUser
+            return Result.success(resolvedUser)
         }
 
         return result
@@ -67,7 +71,9 @@ class AuthRepositoryImpl @Inject constructor(
                 email = user.account.email
             )
             val fullUser = firebaseDatabaseService.getUserFromSnapshot(user.id)
-            _currentUser.value = fullUser ?: user
+            val resolvedUser = fullUser ?: user
+            _currentUser.value = resolvedUser
+            return Result.success(resolvedUser)
         }
 
         return result

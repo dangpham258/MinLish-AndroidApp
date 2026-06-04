@@ -79,14 +79,21 @@ class FirebaseDatabaseService @Inject constructor() {
         val currentEmail = snapshot.child("account/email").getValue(String::class.java) 
             ?: snapshot.child("email").getValue(String::class.java) 
             ?: email
-        val currentAvatarIndex = snapshot.child("avatarIndex").getValue(Int::class.java) ?: 0
-        val currentWordsLearned = snapshot.child("wordsLearned").getValue(Int::class.java) ?: 0
-        val currentStreak = snapshot.child("streak").getValue(Int::class.java) ?: 0
+        val currentAvatarIndex = snapshot.child("userProfile/avatarIndex").getValue(Int::class.java)
+            ?: snapshot.child("avatarIndex").getValue(Int::class.java) ?: 0
+        val currentWordsLearned = snapshot.child("userProfile/wordsLearned").getValue(Int::class.java)
+            ?: snapshot.child("wordsLearned").getValue(Int::class.java) ?: 0
+        val currentStreak = snapshot.child("userProfile/streak").getValue(Int::class.java)
+            ?: snapshot.child("streak").getValue(Int::class.java) ?: 0
         
         // UserProfile
-        val currentLearningGoal = snapshot.child("userProfile/learningGoal").children.mapNotNull {
+        val currentTags = snapshot.child("userProfile/tags").children.mapNotNull {
             it.getValue(String::class.java)
         }
+        val legacyLearningGoal = snapshot.child("userProfile/learningGoal").children.mapNotNull {
+            it.getValue(String::class.java)
+        }
+        val currentLearningGoal = currentTags.ifEmpty { legacyLearningGoal }
         val currentInitialLevel = snapshot.child("userProfile/initialLevel").getValue(String::class.java) ?: InitialLevel.B1.value
         val currentEmailNotification = snapshot.child("userProfile/emailNotification").getValue(Boolean::class.java) ?: false
         val currentDailyReminder = snapshot.child("userProfile/dailyReminder").getValue(Boolean::class.java) ?: false
@@ -204,6 +211,34 @@ class FirebaseDatabaseService @Inject constructor() {
         notificationRef.setValue(notificationData).await()
     }
 
+    suspend fun getNotifications(userId: String): List<com.minlish.app.domain.model.Notification> {
+        return try {
+            val snapshot = database.getReference("notifications").child(userId).get().await()
+            if (!snapshot.exists()) return emptyList()
+
+            snapshot.children
+                .mapNotNull { child ->
+                    try {
+                        val createdAt = child.child("createdAt").getValue(Long::class.java) ?: 0L
+                        createdAt to com.minlish.app.domain.model.Notification(
+                            id = child.child("id").getValue(String::class.java) ?: child.key.orEmpty(),
+                            title = child.child("title").getValue(String::class.java).orEmpty(),
+                            content = child.child("content").getValue(String::class.java).orEmpty(),
+                            createdAt = createdAt,
+                            isRead = child.child("isRead").getValue(Boolean::class.java) ?: false
+                        )
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+                .sortedByDescending { it.first }
+                .map { it.second }
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Error getting notifications: ${e.message}")
+            emptyList()
+        }
+    }
+
     suspend fun deleteUser(uid: String) {
         usersRef.child(uid).removeValue().await()
     }
@@ -254,9 +289,9 @@ class FirebaseDatabaseService @Inject constructor() {
                     emailNotification = child("userProfile/emailNotification").getValue(Boolean::class.java) ?: false,
                     dailyReminder = child("userProfile/dailyReminder").getValue(Boolean::class.java) ?: false,
                     spacedRepetition = child("userProfile/spacedRepetition").getValue(Boolean::class.java) ?: false,
-                    avatarIndex = child("userProfile/avatarIndex").getValue(Int::class.java) ?: 0,
-                    wordsLearned = child("userProfile/wordsLearned").getValue(Int::class.java) ?: 0,
-                    streak = child("userProfile/streak").getValue(Int::class.java) ?: 0,
+                    avatarIndex = avatarIndex,
+                    wordsLearned = wordsLearned, // Sử dụng biến local đã có logic fallback
+                    streak = streak,
                     tags = learningGoals
                 ),
                 userSetting = UserSetting(
@@ -623,11 +658,11 @@ class FirebaseDatabaseService @Inject constructor() {
         return try {
             val snapshot = usersRef.child(userId).get().await()
             if (snapshot.exists()) {
-                val wordsLearned = snapshot.child("wordsLearned").getValue(Int::class.java) 
-                    ?: snapshot.child("userProfile/wordsLearned").getValue(Int::class.java) 
+                val wordsLearned = snapshot.child("userProfile/wordsLearned").getValue(Int::class.java)
+                    ?: snapshot.child("wordsLearned").getValue(Int::class.java)
                     ?: 0
-                val streak = snapshot.child("streak").getValue(Int::class.java)
-                    ?: snapshot.child("userProfile/streak").getValue(Int::class.java) 
+                val streak = snapshot.child("userProfile/streak").getValue(Int::class.java)
+                    ?: snapshot.child("streak").getValue(Int::class.java)
                     ?: 0
                 
                 val currentLevel = calculateLevel(wordsLearned)
@@ -671,8 +706,6 @@ class FirebaseDatabaseService @Inject constructor() {
     suspend fun saveUserProgress(userId: String, progress: com.minlish.app.presentation.dashboard.model.UserProgress) {
         try {
             val updates = mapOf(
-                "wordsLearned" to progress.wordsCount,
-                "streak" to progress.streak,
                 "userProfile/wordsLearned" to progress.wordsCount,
                 "userProfile/streak" to progress.streak
             )
@@ -753,7 +786,11 @@ class FirebaseDatabaseService @Inject constructor() {
                     "id" to userId,
                     "name" to "Bunny Learner",
                     "userProfile" to mapOf(
+                        "tags" to emptyList<String>(),
                         "initialLevel" to "B1",
+                        "emailNotification" to false,
+                        "dailyReminder" to false,
+                        "spacedRepetition" to false,
                         "wordsLearned" to 0,
                         "streak" to 0,
                         "avatarIndex" to 1
@@ -761,9 +798,7 @@ class FirebaseDatabaseService @Inject constructor() {
                     "userSetting" to mapOf(
                         "dailyNewWordGoal" to 10,
                         "dailyReviewGoal" to 30
-                    ),
-                    "wordsLearned" to 0,
-                    "streak" to 0
+                    )
                 )
                 usersRef.child(userId).setValue(userData).await()
             }

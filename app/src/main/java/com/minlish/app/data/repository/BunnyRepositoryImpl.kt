@@ -37,11 +37,20 @@ class BunnyRepositoryImpl(
         )
     }
 
+//    private suspend fun updateUserWordsLearned() {
+//        val userId = getCurrentUserId()
+//        val user = firebaseService.getUserFromSnapshot(userId) ?: return
+//        val currentWords = user.userProfile.wordsLearned
+//        firebaseService.updateUser(userId, mapOf("wordsLearned" to currentWords + 1))
+//    }
     private suspend fun updateUserWordsLearned() {
         val userId = getCurrentUserId()
-        val user = firebaseService.getUserFromSnapshot(userId) ?: return
-        val currentWords = user.userProfile.wordsLearned
-        firebaseService.updateUser(userId, mapOf("wordsLearned" to currentWords + 1))
+
+        // Sử dụng ServerValue.increment để đảm bảo tính nguyên tử
+        val updates = mapOf(
+            "userProfile/wordsLearned" to com.google.firebase.database.ServerValue.increment(1)
+        )
+        firebaseService.updateUser(userId, updates)
     }
 
     override suspend fun notifyNewWordLearned(vocabularyId: String) {
@@ -217,8 +226,13 @@ class BunnyRepositoryImpl(
         firebaseService.syncReviewHistory(getCurrentUserId(), history)
     }
 
-    override fun getNotifications(): Flow<List<Notification>> = flow { emit(emptyList()) }
-    override suspend fun addNotification(notification: Notification) {}
+    override fun getNotifications(): Flow<List<Notification>> = flow {
+        emit(firebaseService.getNotifications(getCurrentUserId()))
+    }
+
+    override suspend fun addNotification(notification: Notification) {
+        firebaseService.createNotification(getCurrentUserId(), notification)
+    }
     override suspend fun prepopulateInitialData() {}
 
     override suspend fun getUserProgress(userId: String): com.minlish.app.presentation.dashboard.model.UserProgress? {

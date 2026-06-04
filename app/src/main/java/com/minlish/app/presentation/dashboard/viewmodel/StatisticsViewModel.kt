@@ -10,9 +10,11 @@ import com.minlish.app.presentation.dashboard.model.DailyPlanTelemetry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
+import com.minlish.app.domain.model.Notification
 import com.minlish.app.domain.model.ReviewHistory
 import com.minlish.app.domain.model.UserSetting
 import com.minlish.app.domain.model.enumration.EaseFactor
@@ -36,6 +38,9 @@ class StatisticsViewModel @Inject constructor(
 
     private val _userSetting = MutableStateFlow(UserSetting())
     val userSetting: StateFlow<UserSetting> = _userSetting.asStateFlow()
+
+    private val _latestNotification = MutableStateFlow<Notification?>(null)
+    val latestNotification: StateFlow<Notification?> = _latestNotification.asStateFlow()
 
     private fun getUserId(): String {
         return userSession.getUserId() ?: "test_user_001"
@@ -75,6 +80,7 @@ class StatisticsViewModel @Inject constructor(
                     streak = computedStreak
                 )
             }
+            repository.saveUserProgress(userId, _userProgress.value)
 
             // Truy vấn động số từ mới và số từ cần ôn tập
             val dailyPlan = repository.getDailyPlanTelemetry(userId)
@@ -82,6 +88,7 @@ class StatisticsViewModel @Inject constructor(
                 dailyNewWordGoal = dailyPlan.newWordsCount,
                 dailyReviewGoal = dailyPlan.reviewWordsCount
             )
+            _latestNotification.value = repository.getNotifications().first().firstOrNull()
 
             // Bản đồ gom nhóm theo thứ tự ngày trong tuần của Java Calendar (MONDAY..SUNDAY)
             val dailyMinutesMap = mutableMapOf<Int, Int>()

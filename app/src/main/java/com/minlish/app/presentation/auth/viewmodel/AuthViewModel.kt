@@ -1,14 +1,18 @@
 package com.minlish.app.presentation.auth.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minlish.app.domain.repository.AuthRepository
 import com.minlish.app.domain.usecase.GetAuthStateUseCase
 import com.minlish.app.domain.usecase.LoginUseCase
 import com.minlish.app.domain.usecase.SignUpUseCase
+import com.minlish.app.domain.model.User
+import com.minlish.app.core.notification.DailyReminderScheduler
 import com.minlish.app.core.util.GoogleAuthManager
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -18,6 +22,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
+    @ApplicationContext private val appContext: Context,
     private val loginUseCase: LoginUseCase,
     private val signUpUseCase: SignUpUseCase,
     private val getAuthStateUseCase: GetAuthStateUseCase,
@@ -54,6 +59,7 @@ class AuthViewModel @Inject constructor(
             val result = loginUseCase(email, password)
             _isLoading.value = false
             if (result.isSuccess) {
+                result.getOrNull()?.let { syncReminderAfterLogin(it) }
                 _isUserLoggedIn.value = true
                 _eventFlow.emit(UiEvent.AuthSuccess)
             } else {
@@ -68,6 +74,7 @@ class AuthViewModel @Inject constructor(
             val result = signUpUseCase(name, email, password)
             _isLoading.value = false
             if (result.isSuccess) {
+                result.getOrNull()?.let { syncReminderAfterLogin(it) }
                 _isUserLoggedIn.value = true
                 _eventFlow.emit(UiEvent.AuthSuccess)
             } else {
@@ -91,6 +98,7 @@ class AuthViewModel @Inject constructor(
             val result = authRepository.loginWithGoogle(idToken)
             _isLoading.value = false
             if (result.isSuccess) {
+                result.getOrNull()?.let { syncReminderAfterLogin(it) }
                 _isUserLoggedIn.value = true
                 onSuccess()
             } else {
@@ -103,6 +111,7 @@ class AuthViewModel @Inject constructor(
         googleAuthManager.signOut {
             viewModelScope.launch {
                 authRepository.logout()
+                DailyReminderScheduler.cancel(appContext)
                 _isUserLoggedIn.value = false
                 onComplete()
             }
@@ -110,6 +119,18 @@ class AuthViewModel @Inject constructor(
     }
 
     fun getGoogleAuthManager() = googleAuthManager
+
+    private fun syncReminderAfterLogin(user: User) {
+        if (user.userProfile.dailyReminder) {
+            DailyReminderScheduler.forceReschedule(
+                context = appContext,
+                userId = user.id,
+                email = user.account.email
+            )
+        } else {
+            DailyReminderScheduler.cancel(appContext)
+        }
+    }
 
     suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
         _isLoading.value = true

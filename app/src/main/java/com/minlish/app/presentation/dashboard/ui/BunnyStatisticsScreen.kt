@@ -89,6 +89,7 @@ fun BunnyStatisticsContent(
     val stats by viewModel.userProgress.collectAsState()
     val reports by viewModel.weeklyActivity.collectAsState()
     val setting by viewModel.userSetting.collectAsState()
+    val latestNotification by viewModel.latestNotification.collectAsState()
 
     val todayName = remember {
         when (Calendar.getInstance().get(Calendar.DAY_OF_WEEK)) {
@@ -397,7 +398,26 @@ fun BunnyStatisticsContent(
             RetentionCurveCard(stats = stats)
 
             // 7. Achievement Preview (Huy hiệu nhận thêm - Bản Premium)
-            MilestoneCard()
+            MilestoneCard(
+                title = latestNotification?.title ?: "Daily reminder",
+                content = latestNotification?.content ?: "Turn on reminders to keep your study habit steady.",
+                label = if (latestNotification == null) "NOTIFICATION" else "LATEST NOTIFICATION",
+                timeText = latestNotification?.createdAt?.let { formatNotificationTime(it) }.orEmpty()
+            )
         }
+    }
+}
+
+private fun formatNotificationTime(createdAt: Long): String {
+    if (createdAt <= 0L) return ""
+    val diffMs = (System.currentTimeMillis() - createdAt).coerceAtLeast(0L)
+    val minuteMs = 60_000L
+    val hourMs = 60 * minuteMs
+    val dayMs = 24 * hourMs
+    return when {
+        diffMs < minuteMs -> "Just now"
+        diffMs < hourMs -> "${diffMs / minuteMs} min ago"
+        diffMs < dayMs -> "${diffMs / hourMs}h ago"
+        else -> "${diffMs / dayMs}d ago"
     }
 }

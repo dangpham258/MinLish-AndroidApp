@@ -6,16 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -32,6 +29,10 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun MilestoneCard(
+    label: String = "NOTIFICATION",
+    title: String = "Daily reminder",
+    content: String = "Turn on reminders to keep your study habit steady.",
+    timeText: String = "",
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -42,7 +43,7 @@ fun MilestoneCard(
             .clip(RoundedCornerShape(24.dp))
             .background(
                 Brush.horizontalGradient(
-                    listOf(Color(0xFF5B21B6), Color(0xFF7C3AED)) // Indigo to Purple gradient
+                    listOf(Color(0xFF4C1D95), Color(0xFF7C3AED))
                 )
             ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -56,71 +57,59 @@ fun MilestoneCard(
         ) {
             Box(
                 modifier = Modifier
-                    .size(56.dp)
-                    .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
-                    .border(1.5.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(16.dp)),
+                    .size(52.dp)
+                    .background(Color.White.copy(alpha = 0.16f), CircleShape)
+                    .border(1.dp, Color.White.copy(alpha = 0.35f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text("🏆", fontSize = 28.sp)
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(26.dp)
+                )
             }
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = label.uppercase(),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = 0.72f),
+                        letterSpacing = 1.2.sp
+                    )
+                    if (timeText.isNotBlank()) {
+                        Text(
+                            text = timeText,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White.copy(alpha = 0.72f)
+                        )
+                    }
+                }
+
                 Text(
-                    text = "CHINH PHỤC CỘT MỐC",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White.copy(alpha = 0.7f),
-                    letterSpacing = 1.2.sp
-                )
-                Text(
-                    text = "Huy Hiệu Chăm Chỉ",
+                    text = title,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White
                 )
-                Spacer(modifier = Modifier.height(4.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(6.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.2f))
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(0.33f) // Progress 1/3
-                                .fillMaxHeight()
-                                .background(Color(0xFF34D399), CircleShape) // Green glow
-                        )
-                    }
-                    Text(
-                        text = "1/3",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
                 Text(
-                    text = "Hoàn thành thêm 2 bài học để mở khóa!",
-                    fontSize = 11.sp,
-                    color = Color.White.copy(alpha = 0.8f)
+                    text = content,
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp,
+                    color = Color.White.copy(alpha = 0.84f)
                 )
             }
-
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                tint = Color.White,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp)
-            )
         }
     }
 }
