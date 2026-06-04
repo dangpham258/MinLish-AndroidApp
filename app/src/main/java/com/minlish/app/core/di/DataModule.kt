@@ -1,14 +1,22 @@
 package com.minlish.app.core.di
 
-import com.minlish.app.data.repository.FirebaseSourceImpl
+import android.content.Context
+import com.minlish.app.data.FileStorageHelperImpl
+import com.minlish.app.data.repository.SystemVocabularySourceImpl
 import com.minlish.app.data.repository.WordRepositoryImpl
-import com.minlish.app.data.source.remote.FirebaseSource
+import com.minlish.app.data.source.remote.FirebaseAuthApi
+import com.minlish.app.data.source.remote.FirebaseDatabaseService
 import com.minlish.app.data.source.remote.FreeDictionaryApi
 import com.minlish.app.data.source.remote.MinhqndApi
+import com.minlish.app.data.source.remote.SystemVocabularySource
+import com.minlish.app.core.util.FileStorageHelper
+import com.minlish.app.domain.repository.BunnyRepository
 import com.minlish.app.domain.repository.WordRepository
+import com.minlish.app.domain.usecase.CreateDeckUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import retrofit2.Retrofit
@@ -20,9 +28,15 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseSource(
-        firebaseDatabaseService: com.minlish.app.data.source.remote.FirebaseDatabaseService
-    ): FirebaseSource = FirebaseSourceImpl(firebaseDatabaseService)
+    fun provideSystemVocabularySource(
+        firebaseDatabaseService: FirebaseDatabaseService
+    ): SystemVocabularySource = SystemVocabularySourceImpl(firebaseDatabaseService)
+
+    @Provides
+    @Singleton
+    fun provideFileStorageHelper(
+        @ApplicationContext context: Context
+    ): FileStorageHelper = FileStorageHelperImpl(context)
 
     @Provides
     @Singleton
@@ -38,7 +52,7 @@ object DataModule {
     @Singleton
     fun provideMinhqndApi(): MinhqndApi {
         return Retrofit.Builder()
-            .baseUrl("https://dict.minhqnd.com/") // Thay bằng base URL thật của API này
+            .baseUrl("https://dict.minhqnd.com/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(MinhqndApi::class.java)
@@ -47,10 +61,19 @@ object DataModule {
     @Provides
     @Singleton
     fun provideWordRepository(
-        firebaseSource: FirebaseSource,
+        systemVocabularySource: SystemVocabularySource,
         freeDictApi: FreeDictionaryApi,
-        minhqndApi: MinhqndApi // Giả định bạn đã tạo Retrofit cho Minhqnd
+        minhqndApi: MinhqndApi
     ): WordRepository {
-        return WordRepositoryImpl(firebaseSource, freeDictApi, minhqndApi)
+        return WordRepositoryImpl(systemVocabularySource, freeDictApi, minhqndApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCreateDeckUseCase(
+        repository: BunnyRepository,
+        authApi: FirebaseAuthApi
+    ): CreateDeckUseCase {
+        return CreateDeckUseCase(repository, authApi)
     }
 }

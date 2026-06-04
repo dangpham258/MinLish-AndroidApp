@@ -84,7 +84,7 @@ fun LearnScreen(
     ) { loading ->
         if (loading) {
             BunnyLoadingScreen(
-                message = "Đang chuẩn bị từ vựng...",
+                message = "Preparing vocabulary...",
                 progress = animatedProgress
             )
         } else {
@@ -119,7 +119,7 @@ fun LearnScreen(
                         verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
-                            text = if (mode == LearnMode.SRS) "Tiến độ hôm nay" else "${items.size - learnedCount} words left",
+                            text = if (mode == LearnMode.SRS) "Today's progress" else "${items.size - learnedCount} words left",
                             style = BunnyTypography.LabelMd,
                             color = if (mode == LearnMode.SRS) BunnyColors.Primary else BunnyColors.OnSurfaceVariant,
                             fontWeight = FontWeight.Bold
@@ -212,14 +212,14 @@ fun LearnScreen(
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
-                                    text = if (items.isEmpty()) "Tuyệt vời!" else "Hoàn thành bộ từ!",
+                                    text = if (items.isEmpty()) "Excellent!" else "Vocabulary set completed!",
                                     style = BunnyTypography.HeadlineMd,
                                     color = BunnyColors.OnSurface,
                                     fontWeight = FontWeight.ExtraBold
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = if (items.isEmpty()) "Không có từ vựng nào cần ôn tập hôm nay." else "Bạn đã hoàn thành tất cả từ vựng trong bộ này.",
+                                    text = if (items.isEmpty()) "No vocabulary to review today." else "You have completed all vocabulary in this set.",
                                     textAlign = TextAlign.Center,
                                     style = BunnyTypography.BodyMd,
                                     color = BunnyColors.Outline,
@@ -235,7 +235,7 @@ fun LearnScreen(
                                         modifier = Modifier.weight(1f).height(48.dp),
                                         shape = RoundedCornerShape(12.dp)
                                     ) {
-                                        Text("Thoát", style = BunnyTypography.LabelMd)
+                                        Text("Exit", style = BunnyTypography.LabelMd)
                                     }
                                     if (items.isNotEmpty()) {
                                         Button(
@@ -244,7 +244,7 @@ fun LearnScreen(
                                             shape = RoundedCornerShape(12.dp),
                                             colors = ButtonDefaults.buttonColors(containerColor = BunnyColors.Primary)
                                         ) {
-                                            Text("Xem lại", style = BunnyTypography.LabelMd, color = Color.White)
+                                            Text("Review", style = BunnyTypography.LabelMd, color = Color.White)
                                         }
                                     }
                                 }
@@ -270,9 +270,9 @@ fun LearnScreen(
                     ) {
                         if (currentVocab != null && !isCompleted) {
                             if (isFlipped) {
-                                var estHard by remember(currentVocab.id) { mutableStateOf("1 ngày") }
-                                var estGood by remember(currentVocab.id) { mutableStateOf("4 ngày") }
-                                var estEasy by remember(currentVocab.id) { mutableStateOf("7 ngày") }
+                                var estHard by remember(currentVocab.id) { mutableStateOf("1 day") }
+                                var estGood by remember(currentVocab.id) { mutableStateOf("4 days") }
+                                var estEasy by remember(currentVocab.id) { mutableStateOf("7 days") }
 
                                 LaunchedEffect(currentVocab.id) {
                                     estHard = viewModel.getButtonIntervalEstimate(currentVocab.id, EaseFactor.HARD)
@@ -285,32 +285,32 @@ fun LearnScreen(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     SrsButton(
-                                        title = "Lặp lại", subtitle = "1 ngày",
+                                        title = "Again", subtitle = "1 day",
                                         containerColor = BunnyColors.ErrorContainer, contentColor = BunnyColors.Error,
                                         modifier = Modifier.weight(1f)
                                     ) { viewModel.submitSrsGrade(currentVocab.id, EaseFactor.AGAIN) }
 
                                     SrsButton(
-                                        title = "Khó", subtitle = estHard,
+                                        title = "Hard", subtitle = estHard,
                                         containerColor = Color(0xFFECECFF), contentColor = BunnyColors.OnSurfaceVariant,
                                         modifier = Modifier.weight(1f)
                                     ) { viewModel.submitSrsGrade(currentVocab.id, EaseFactor.HARD) }
 
                                     SrsButton(
-                                        title = "Tốt", subtitle = estGood,
+                                        title = "Good", subtitle = estGood,
                                         containerColor = BunnyColors.PrimaryContainer, contentColor = BunnyColors.Primary,
                                         modifier = Modifier.weight(1f)
                                     ) { viewModel.submitSrsGrade(currentVocab.id, EaseFactor.GOOD) }
 
                                     SrsButton(
-                                        title = "Dễ", subtitle = estEasy,
+                                        title = "Easy", subtitle = estEasy,
                                         containerColor = BunnyColors.PrimaryContainer.copy(alpha = 0.7f), contentColor = BunnyColors.Primary,
                                         modifier = Modifier.weight(1f)
                                     ) { viewModel.submitSrsGrade(currentVocab.id, EaseFactor.EASY) }
                                 }
                             } else {
                                 Text(
-                                    text = "Chạm vào thẻ để xem đáp án",
+                                    text = "Tap the card to see the answer",
                                     style = BunnyTypography.BodyMd,
                                     fontStyle = FontStyle.Italic,
                                     color = BunnyColors.Outline,
@@ -447,7 +447,7 @@ fun LearnFlippableCard(
                     )
 
                     Text(
-                        text = "Chạm vào thẻ để xem đáp án",
+                        text = "Tap the card to see the answer",
                         style = BunnyTypography.BodyMd.copy(fontStyle = FontStyle.Italic),
                         color = BunnyColors.Outline
                     )
@@ -543,7 +543,7 @@ fun LearnFlippableCard(
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Text(
-                                    text = "VÍ DỤ",
+                                    text = "EXAMPLE",
                                     style = BunnyTypography.LabelSm.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp),
                                     color = BunnyColors.Primary.copy(alpha = 0.7f)
                                 )
@@ -571,7 +571,7 @@ fun LearnFlippableCard(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
-                                    text = "GHI CHÚ",
+                                    text = "NOTE",
                                     style = BunnyTypography.LabelSm.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp),
                                     color = BunnyColors.Primary.copy(alpha = 0.7f)
                                 )

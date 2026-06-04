@@ -1,4 +1,4 @@
-package com.minlish.app.presentation.deck
+package com.minlish.app.presentation.deck.ui
 
 import android.content.Context
 import android.media.MediaPlayer
@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
@@ -25,11 +24,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.minlish.app.domain.model.Vocabulary
 import com.minlish.app.presentation.common.BunnyAppBar
-import com.minlish.app.presentation.common.BunnyBottomNavBar
 import com.minlish.app.presentation.theme.DeckColors
 import com.minlish.app.presentation.theme.DeckTypography
 import kotlinx.coroutines.CoroutineScope
@@ -39,11 +40,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
-import com.minlish.app.presentation.common.BunnyTab
+import com.minlish.app.presentation.deck.viewmodel.DeckDetailViewModel
 
 @Composable
 fun DeckDetailScreen(
-    viewModel: DeckViewModel,
+    viewModel: DeckDetailViewModel,
     deckId: String,
     onNavigateBack: () -> Unit,
     onNavigateToAddWord: (String) -> Unit,
@@ -61,7 +62,7 @@ fun DeckDetailScreen(
     val learnedCount by viewModel.getDeckProgress(deckId).collectAsState(initial = 0)
 
     // State cho dialog xóa từ vựng
-    var wordToDelete by remember { mutableStateOf<com.minlish.app.domain.model.Vocabulary?>(null) }
+    var wordToDelete by remember { mutableStateOf<Vocabulary?>(null) }
     val isPublicDeck = deck?.isPublic ?: true
 
     // Dialog xác nhận xóa từ vựng
@@ -75,10 +76,10 @@ fun DeckDetailScreen(
                     tint = MaterialTheme.colorScheme.error
                 )
             },
-            title = { Text("Xóa từ vựng", style = DeckTypography.headlineMd) },
+            title = { Text("Delete Vocabulary", style = DeckTypography.headlineMd) },
             text = {
                 Text(
-                    "Bạn có chắc muốn xóa từ \"${wordToDelete!!.word}\"? Hành động này không thể hoàn tác.",
+                    "Are you sure you want to delete the word \"${wordToDelete!!.word}\"? This action cannot be undone.",
                     style = DeckTypography.bodyMd
                 )
             },
@@ -90,12 +91,12 @@ fun DeckDetailScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Xóa")
+                    Text("Delete")
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { wordToDelete = null }) {
-                    Text("Hủy")
+                    Text("Cancel")
                 }
             }
         )
@@ -250,7 +251,7 @@ fun DeckDetailScreen(
 @Composable
 fun LearningModeItem(
     title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     bgColor: Color, 
     modifier: Modifier,
     onClick: () -> Unit
@@ -273,7 +274,7 @@ fun LearningModeItem(
                 Icon(icon, contentDescription = null, tint = DeckColors.Primary)
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Text(title, style = DeckTypography.labelMd, color = DeckColors.OnSurface, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Text(title, style = DeckTypography.labelMd, color = DeckColors.OnSurface, textAlign = TextAlign.Center)
         }
     }
 }
@@ -314,7 +315,7 @@ fun WordCardItem(
                         ) {
                             Icon(
                                 Icons.Default.Delete,
-                                contentDescription = "Xóa từ vựng",
+                                contentDescription = "Delete vocabulary",
                                 tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -332,7 +333,7 @@ fun WordCardItem(
                 }
             }
             Spacer(modifier = Modifier.height(4.dp))
-            Text(word.partOfSpeech, style = DeckTypography.labelLg, color = DeckColors.Outline, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+            Text(word.partOfSpeech, style = DeckTypography.labelLg, color = DeckColors.Outline, fontStyle = FontStyle.Italic)
             Spacer(modifier = Modifier.height(8.dp))
             Text(word.englishDefinition, style = DeckTypography.bodyMd, color = DeckColors.OnSurface)
         }

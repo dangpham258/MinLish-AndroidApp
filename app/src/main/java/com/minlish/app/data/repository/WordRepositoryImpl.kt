@@ -1,6 +1,6 @@
 package com.minlish.app.data.repository
 
-import com.minlish.app.data.source.remote.FirebaseSource
+import com.minlish.app.data.source.remote.SystemVocabularySource
 import com.minlish.app.data.source.remote.FreeDictionaryApi
 import com.minlish.app.data.source.remote.MinhqndApi
 import com.minlish.app.domain.model.Vocabulary
@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
 import com.minlish.app.data.mapper.mapToVocabularyDomain
 
 class WordRepositoryImpl(
-    private val firebaseSource: FirebaseSource, // Giả định bạn đã có class xử lý Firebase
+    private val firebaseSource: SystemVocabularySource,
     private val freeDictApi: FreeDictionaryApi,
     private val minhqndApi: MinhqndApi
 ) : WordRepository {

@@ -75,7 +75,7 @@ fun ContextScreen(
 
     if (isLoading) {
         BunnyLoadingScreen(
-            message = "Đang chuẩn bị không gian học...",
+            message = "Preparing learning space...",
             progress = loadingProgress
         )
         return
@@ -109,7 +109,7 @@ fun ContextScreen(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text(
-                    text = "Tiến độ hôm nay",
+                    text = "Today's progress",
                     style = BunnyTypography.LabelMd,
                     color = ContextScreenColors.Primary,
                     fontWeight = FontWeight.Bold
@@ -200,14 +200,14 @@ fun ContextScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "Hoàn thành bộ từ!",
+                            text = "Vocabulary set completed!",
                             style = BunnyTypography.HeadlineMd,
                             color = BunnyColors.OnSurface,
                             fontWeight = FontWeight.ExtraBold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Bạn đã hoàn thành tất cả từ vựng trong bộ này.",
+                            text = "You have completed all vocabulary in this set.",
                             textAlign = TextAlign.Center,
                             style = BunnyTypography.BodyMd,
                             color = BunnyColors.Outline,
@@ -227,7 +227,7 @@ fun ContextScreen(
                                 border = BorderStroke(2.dp, ContextScreenColors.SkyBlue.copy(alpha = 0.4f))
                             ) {
                                 Text(
-                                    "Thoát",
+                                    "Exit",
                                     style = BunnyTypography.LabelMd,
                                     color = ContextScreenColors.Primary
                                 )
@@ -241,7 +241,7 @@ fun ContextScreen(
                                 colors = ButtonDefaults.buttonColors(containerColor = ContextScreenColors.SkyBlue)
                             ) {
                                 Text(
-                                    "Xem lại",
+                                    "Review",
                                     style = BunnyTypography.LabelMd,
                                     color = ContextScreenColors.Primary,
                                     fontWeight = FontWeight.Bold

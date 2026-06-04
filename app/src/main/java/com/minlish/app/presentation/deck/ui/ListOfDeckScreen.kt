@@ -1,4 +1,4 @@
-package com.minlish.app.presentation.deck
+package com.minlish.app.presentation.deck.ui
 
 import android.content.Intent
 import android.widget.Toast
@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,12 +25,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.minlish.app.domain.model.Deck
 import com.minlish.app.presentation.common.BunnyAppBar
+import com.minlish.app.presentation.deck.viewmodel.DeckListViewModel
 import com.minlish.app.presentation.theme.DeckColors
 import com.minlish.app.presentation.theme.DeckTypography
 
 @Composable
 fun ListOfDeckScreen(
-    viewModel: DeckViewModel,
+    viewModel: DeckListViewModel,
     onNavigateToDeckDetail: (String) -> Unit,
     onNavigateToCreateDeck: () -> Unit,
     modifier: Modifier = Modifier
@@ -64,10 +64,10 @@ fun ListOfDeckScreen(
                     tint = MaterialTheme.colorScheme.error
                 )
             },
-            title = { Text("Xóa bộ từ vựng", style = DeckTypography.headlineMd) },
+            title = { Text("Delete vocabulary list", style = DeckTypography.headlineMd) },
             text = {
                 Text(
-                    "Bạn có chắc muốn xóa bộ \"${deckToDelete!!.name}\"? Hành động này không thể hoàn tác.",
+                    "Are you sure you want to delete the list \"${deckToDelete!!.name}\"? This action cannot be undone.",
                     style = DeckTypography.bodyMd
                 )
             },
@@ -79,12 +79,12 @@ fun ListOfDeckScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Xóa")
+                    Text("Delete")
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { deckToDelete = null }) {
-                    Text("Hủy")
+                    Text("Cancel")
                 }
             }
         )
@@ -97,10 +97,10 @@ fun ListOfDeckScreen(
             icon = {
                 Icon(Icons.Default.Download, contentDescription = null, tint = DeckColors.Primary)
             },
-            title = { Text("Xuất file CSV", style = DeckTypography.headlineMd) },
+            title = { Text("Export CSV file", style = DeckTypography.headlineMd) },
             text = {
                 Text(
-                    "Bạn có muốn bao gồm các bộ từ vựng chung (dùng chung) vào file xuất không?",
+                    "Do you want to include public vocabulary lists in the exported file?",
                     style = DeckTypography.bodyMd
                 )
             },
@@ -110,24 +110,18 @@ fun ListOfDeckScreen(
                         showExportDialog = false
                         viewModel.exportDecksToCSV(
                             decks = decks,
-                            includePublic = true,
-                            context = context
-                        ) { uri ->
-                            if (uri != null) {
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/csv"
-                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                context.startActivity(Intent.createChooser(shareIntent, "Chia sẻ file CSV"))
-                                Toast.makeText(context, "Xuất file thành công!", Toast.LENGTH_SHORT).show()
+                            includePublic = true
+                        ) { shareIntent ->
+                            if (shareIntent != null) {
+                                context.startActivity(Intent.createChooser(shareIntent, "Share CSV file"))
+                                Toast.makeText(context, "Exported successfully!", Toast.LENGTH_SHORT).show()
                             } else {
-                                Toast.makeText(context, "Xuất file thất bại!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Export failed!", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
                 ) {
-                    Text("Có, bao gồm tất cả")
+                    Text("Yes, include everything")
                 }
             },
             dismissButton = {
@@ -136,24 +130,18 @@ fun ListOfDeckScreen(
                         showExportDialog = false
                         viewModel.exportDecksToCSV(
                             decks = decks,
-                            includePublic = false,
-                            context = context
-                        ) { uri ->
-                            if (uri != null) {
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/csv"
-                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                context.startActivity(Intent.createChooser(shareIntent, "Chia sẻ file CSV"))
-                                Toast.makeText(context, "Xuất file thành công!", Toast.LENGTH_SHORT).show()
+                            includePublic = false
+                        ) { shareIntent ->
+                            if (shareIntent != null) {
+                                context.startActivity(Intent.createChooser(shareIntent, "Share CSV file"))
+                                Toast.makeText(context, "Exported successfully!", Toast.LENGTH_SHORT).show()
                             } else {
-                                Toast.makeText(context, "Xuất file thất bại!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Export failed!", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
                 ) {
-                    Text("Không, chỉ của tôi")
+                    Text("No, only mine")
                 }
             }
         )
@@ -172,7 +160,7 @@ fun ListOfDeckScreen(
                 contentColor = DeckColors.SurfaceContainerLowest,
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Create New Deck")
+                Icon(Icons.Default.Add, contentDescription = "Create new deck")
             }
         }
     ) { padding ->
@@ -183,13 +171,13 @@ fun ListOfDeckScreen(
                 .padding(horizontal = 20.dp)
         ) {
             Text(
-                text = "Bộ từ vựng của tôi",
+                text = "My vocabulary lists",
                 style = DeckTypography.headlineLg,
                 color = DeckColors.OnSurface
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Quản lý và ôn tập các chủ đề yêu thích của bạn.",
+                text = "Manage and review your favorite topics.",
                 style = DeckTypography.bodyMd,
                 color = DeckColors.OnSurfaceVariant
             )
@@ -216,9 +204,8 @@ fun ListOfDeckScreen(
                 value = searchQuery,
                 onValueChange = {
                     searchQuery = it
-                    viewModel.searchDecks(it)
                 },
-                placeholder = { Text("Tìm kiếm bộ từ vựng...", style = DeckTypography.bodyMd) },
+                placeholder = { Text("Search vocabulary lists...", style = DeckTypography.bodyMd) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -281,7 +268,7 @@ fun DeckCardItem(
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "${deck.totalWords} từ",
+                            text = "${deck.totalWords} word(s)",
                             style = DeckTypography.labelLg,
                             color = DeckColors.OnSurfaceVariant
                         )
@@ -300,7 +287,7 @@ fun DeckCardItem(
                         ) {
                             Icon(
                                 Icons.Default.Delete,
-                                contentDescription = "Xóa bộ từ vựng",
+                                contentDescription = "Delete vocabulary list",
                                 tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -320,7 +307,7 @@ fun DeckCardItem(
 
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = "Tiến độ: $progressPercent%", style = DeckTypography.labelLg, color = DeckColors.Outline)
+                Text(text = "Progress: $progressPercent%", style = DeckTypography.labelLg, color = DeckColors.Outline)
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(

@@ -76,6 +76,6 @@ class CalculateSrsUseCase {
     ): String {
         val nextState = invoke(currentState, button)
         val days = nextState.interval.roundToInt()
-        return if (days <= 1) "1 ngày" else "$days ngày"
+        return if (days <= 1) "1 day" else "$days days"
     }
 }

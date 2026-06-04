@@ -1,6 +1,5 @@
 package com.minlish.app.presentation.navigation
 
-import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -8,28 +7,36 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
-import com.minlish.app.presentation.deck.AddUpdateWordScreen
-import com.minlish.app.presentation.deck.CreateNewDeckScreen
-import com.minlish.app.presentation.deck.DeckDetailScreen
-import com.minlish.app.presentation.deck.DeckViewModel
-import com.minlish.app.presentation.deck.ListOfDeckScreen
+import com.minlish.app.presentation.deck.ui.AddUpdateWordScreen
+import com.minlish.app.presentation.deck.viewmodel.CreateDeckViewModel
+import com.minlish.app.presentation.deck.ui.CreateNewDeckScreen
+import com.minlish.app.presentation.deck.ui.DeckDetailScreen
+import com.minlish.app.presentation.deck.viewmodel.DeckDetailViewModel
+import com.minlish.app.presentation.deck.viewmodel.DeckListViewModel
+import com.minlish.app.presentation.deck.ui.ListOfDeckScreen
+import com.minlish.app.presentation.deck.viewmodel.WordEditorViewModel
 
 const val DECK_GRAPH_ROUTE = "deck_graph"
 
+/**
+ * Navigation graph cho toàn bộ luồng quản lý Deck & Vocabulary.
+ *
+ * Mỗi màn hình sử dụng ViewModel riêng biệt và được cung cấp bởi Hilt.
+ * Vì mỗi ViewModel có scope là [SingletonComponent], dữ liệu sẽ được giữ nhất quán
+ * trong phiên làm việc mà không cần share một ViewModel chung.
+ *
+ * Lưu ý về [DeckDetailViewModel] và [WordEditorViewModel]:
+ * - Chúng được lấy bởi `hiltViewModel()` tương ứng với back stack entry của từng màn hình.
+ * - [WordEditorViewModel] cần danh sách words để chế độ Update tìm từ cần sửa,
+ *   nên nó tự load lại nếu danh sách rỗng.
+ */
 fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
-    // Bọc tất cả deck screens trong một nested navigation graph
-    // để tất cả màn hình deck dùng chung một DeckViewModel instance.
     navigation(
         startDestination = Screen.ListOfDeck.route,
         route = DECK_GRAPH_ROUTE
     ) {
-        composable(route = Screen.ListOfDeck.route) { backStackEntry ->
-            // Lấy ViewModel từ NavBackStackEntry của graph cha (DECK_GRAPH_ROUTE)
-            // để tất cả màn hình deck dùng chung một instance
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(DECK_GRAPH_ROUTE)
-            }
-            val viewModel: DeckViewModel = hiltViewModel(parentEntry)
+        composable(route = Screen.ListOfDeck.route) {
+            val viewModel: DeckListViewModel = hiltViewModel()
             ListOfDeckScreen(
                 viewModel = viewModel,
                 onNavigateToDeckDetail = { deckId ->
@@ -41,11 +48,8 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
             )
         }
 
-        composable(route = Screen.CreateDeck.route) { backStackEntry ->
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(DECK_GRAPH_ROUTE)
-            }
-            val viewModel: DeckViewModel = hiltViewModel(parentEntry)
+        composable(route = Screen.CreateDeck.route) {
+            val viewModel: CreateDeckViewModel = hiltViewModel()
             CreateNewDeckScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
@@ -57,10 +61,7 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
             arguments = listOf(navArgument("deckId") { type = NavType.StringType })
         ) { backStackEntry ->
             val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(DECK_GRAPH_ROUTE)
-            }
-            val viewModel: DeckViewModel = hiltViewModel(parentEntry)
+            val viewModel: DeckDetailViewModel = hiltViewModel()
 
             DeckDetailScreen(
                 viewModel = viewModel,
@@ -97,10 +98,7 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
             val wordId = backStackEntry.arguments?.getString("wordId")
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(DECK_GRAPH_ROUTE)
-            }
-            val viewModel: DeckViewModel = hiltViewModel(parentEntry)
+            val viewModel: WordEditorViewModel = hiltViewModel()
 
             AddUpdateWordScreen(
                 viewModel = viewModel,

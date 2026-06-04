@@ -1,14 +1,11 @@
-package com.minlish.app.presentation.deck
+package com.minlish.app.presentation.deck.ui
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Save
@@ -21,9 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import com.minlish.app.domain.model.Vocabulary
 import com.minlish.app.presentation.common.BunnyAppBar
+import com.minlish.app.presentation.deck.viewmodel.WordEditorViewModel
 import com.minlish.app.presentation.theme.DeckColors
 import com.minlish.app.presentation.theme.DeckTypography
 import java.util.UUID
@@ -31,7 +30,7 @@ import java.util.UUID
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddUpdateWordScreen(
-    viewModel: DeckViewModel,
+    viewModel: WordEditorViewModel,
     deckId: String,
     wordId: String?,
     onNavigateBack: () -> Unit
@@ -52,7 +51,7 @@ fun AddUpdateWordScreen(
 
     LaunchedEffect(deckId) {
         if (isUpdate && viewModel.words.value.isEmpty()) {
-            viewModel.loadDeckDetails(deckId)
+            viewModel.loadWordsForDeck(deckId)
         }
     }
 
@@ -177,9 +176,9 @@ fun AddUpdateWordScreen(
                                     vietnameseMeaning = fetchedWord.vietnameseMeaning
                                     contextExample = fetchedWord.context
                                     soundUrl = fetchedWord.soundUrl
-                                    Toast.makeText(contextCtx, "Tự động điền thành công!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(contextCtx, "Auto-fill successful!", Toast.LENGTH_SHORT).show()
                                 } else {
-                                    Toast.makeText(contextCtx, "Không tìm thấy loại từ này", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(contextCtx, "No word found for this part of speech", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         },
@@ -210,7 +209,7 @@ fun AddUpdateWordScreen(
                                 if (soundUrl.isNotBlank()) {
                                     playAudio(contextCtx, soundUrl)
                                 } else {
-                                    Toast.makeText(contextCtx, "Chưa có file phát âm cho từ này", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(contextCtx, "No pronunciation file for this word", Toast.LENGTH_SHORT).show()
                                 }
                             }) {
                                 Icon(Icons.Default.VolumeUp, contentDescription = "Play Pronunciation", tint = DeckColors.Primary)
@@ -247,7 +246,7 @@ fun AddUpdateWordScreen(
                     OutlinedTextField(
                         value = vietnameseMeaning,
                         onValueChange = { vietnameseMeaning = it },
-                        placeholder = { Text("Nghĩa của từ...") },
+                        placeholder = { Text("Meaning of the word...") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -298,7 +297,7 @@ fun AddUpdateWordScreen(
                     OutlinedTextField(
                         value = contextExample,
                         onValueChange = { contextExample = it },
-                        placeholder = { Text("How is this word used in a sentence?", fontStyle = androidx.compose.ui.text.font.FontStyle.Italic) },
+                        placeholder = { Text("How is this word used in a sentence?", fontStyle = FontStyle.Italic) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 2,
                         shape = RoundedCornerShape(12.dp),
@@ -343,7 +342,7 @@ fun AddUpdateWordScreen(
             ) {
                 Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(24.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Lưu từ vựng", style = DeckTypography.titleLg)
+                Text("Save Vocabulary", style = DeckTypography.titleLg)
             }
 
             Spacer(modifier = Modifier.height(80.dp))

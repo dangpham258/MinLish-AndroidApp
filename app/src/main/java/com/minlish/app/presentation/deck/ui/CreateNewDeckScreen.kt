@@ -1,4 +1,4 @@
-package com.minlish.app.presentation.deck
+package com.minlish.app.presentation.deck.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,13 +17,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.minlish.app.domain.model.enumration.LearningGoal
 import com.minlish.app.presentation.common.BunnyAppBar
+import com.minlish.app.presentation.deck.viewmodel.CreateDeckViewModel
 import com.minlish.app.presentation.theme.DeckColors
 import com.minlish.app.presentation.theme.DeckTypography
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CreateNewDeckScreen(
-    viewModel: DeckViewModel,
+    viewModel: CreateDeckViewModel,
     onNavigateBack: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
@@ -31,10 +32,10 @@ fun CreateNewDeckScreen(
 
     // Tags chỉ từ LearningGoal enum, không cho thêm tự do
     var selectedGoals by remember { mutableStateOf(setOf<LearningGoal>()) }
-    var isSaving by remember { androidx.compose.runtime.mutableStateOf(false) }
+    val isSaving by viewModel.isSaving.collectAsState()
 
     // Navigate back sau khi Firebase đã lưu xong — tránh race condition
-    androidx.compose.runtime.LaunchedEffect(Unit) {
+    LaunchedEffect(Unit) {
         viewModel.deckCreatedEvent.collect {
             onNavigateBack()
         }
@@ -43,7 +44,7 @@ fun CreateNewDeckScreen(
     Scaffold(
         containerColor = DeckColors.Background,
         topBar = {
-            BunnyAppBar(title = "Tạo bộ từ vựng mới", onBackClick = onNavigateBack)
+            BunnyAppBar(title = "Create new vocabulary list", onBackClick = onNavigateBack)
         }
     ) { padding ->
         Column(
@@ -62,14 +63,14 @@ fun CreateNewDeckScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Tên bộ từ", style = DeckTypography.labelLg, color = DeckColors.OnSurface)
+                    Text("List name", style = DeckTypography.labelLg, color = DeckColors.OnSurface)
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
                         placeholder = {
                             Text(
-                                "Ví dụ: IELTS Speaking Part 1",
+                                "e.g. IELTS Speaking Part 1",
                                 style = DeckTypography.bodyMd,
                                 color = DeckColors.Outline
                             )
@@ -89,14 +90,14 @@ fun CreateNewDeckScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text("Mô tả", style = DeckTypography.labelLg, color = DeckColors.OnSurface)
+                    Text("Description", style = DeckTypography.labelLg, color = DeckColors.OnSurface)
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
                         placeholder = {
                             Text(
-                                "Tổng hợp các từ vựng chủ đề giáo dục và công việc...",
+                                "Collection of vocabulary for education and work topics...",
                                 style = DeckTypography.bodyMd,
                                 color = DeckColors.Outline
                             )
@@ -122,10 +123,10 @@ fun CreateNewDeckScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Chọn mục tiêu học", style = DeckTypography.labelLg, color = DeckColors.OnSurface)
+                    Text("Select learning goals", style = DeckTypography.labelLg, color = DeckColors.OnSurface)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        "Chọn một hoặc nhiều mục tiêu phù hợp với bộ từ của bạn",
+                        "Select one or more goals that match your vocabulary list",
                         style = DeckTypography.bodyMd,
                         color = DeckColors.OnSurfaceVariant
                     )
@@ -189,10 +190,10 @@ fun CreateNewDeckScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Học tập hiệu quả hơn!", style = DeckTypography.headlineMd, color = DeckColors.OnPrimaryContainer)
+                        Text("Study more effectively!", style = DeckTypography.headlineMd, color = DeckColors.OnPrimaryContainer)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Càng nhiều từ vựng, khả năng giao tiếp của bạn càng bay cao.",
+                            "The more vocabulary you have, the higher your communication skills will soar.",
                             style = DeckTypography.bodyMd,
                             color = DeckColors.Primary
                         )
@@ -214,15 +215,11 @@ fun CreateNewDeckScreen(
             Button(
                 onClick = {
                     if (name.isNotBlank() && !isSaving) {
-                        isSaving = true
                         viewModel.createDeck(
                             name = name,
                             description = description,
-                            // Truyền name của enum để ViewModel dùng LearningGoal.valueOf()
                             tags = selectedGoals.map { it.name }
                         )
-                        // Không gọi onNavigateBack() ở đây!
-                        // UI sẽ navigate sau khi deckCreatedEvent được emit (Firebase hoàn thành)
                     }
                 },
                 enabled = name.isNotBlank() && !isSaving,
@@ -237,7 +234,7 @@ fun CreateNewDeckScreen(
             ) {
                 Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(24.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Lưu bộ từ vựng", style = DeckTypography.titleLg)
+                Text("Save vocabulary list", style = DeckTypography.titleLg)
             }
 
             Spacer(modifier = Modifier.height(40.dp))

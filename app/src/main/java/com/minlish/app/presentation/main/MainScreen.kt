@@ -20,8 +20,8 @@ import com.minlish.app.presentation.common.BunnyBottomNavBar
 import com.minlish.app.presentation.common.BunnyTab
 import com.minlish.app.presentation.dashboard.ui.BunnyStatisticsScreen
 import com.minlish.app.presentation.dashboard.viewmodel.StatisticsViewModel
-import com.minlish.app.presentation.deck.DeckViewModel
-import com.minlish.app.presentation.deck.ListOfDeckScreen
+import com.minlish.app.presentation.deck.viewmodel.DeckListViewModel
+import com.minlish.app.presentation.deck.ui.ListOfDeckScreen
 import com.minlish.app.presentation.navigation.Screen
 import com.minlish.app.presentation.profile.ProfileScreen
 import com.minlish.app.presentation.profile.ProfileViewModel
@@ -52,7 +52,7 @@ private val BunnyTabSaver = Saver<BunnyTab, String>(
  *
  * FIX #2 — Deck list tự refresh khi quay lại từ CreateDeck:
  *   Dùng currentBackStackEntryAsState: mỗi khi destination đổi về Screen.Home,
- *   gọi loadDecks(). Kết hợp với deckCreatedEvent trong DeckViewModel (navigate
+ *   gọi loadDecks(). Kết hợp với deckCreatedEvent trong CreateDeckViewModel (navigate
  *   sau khi Firebase write hoàn tất), đảm bảo deck mới luôn xuất hiện ngay lập tức.
  */
 @Composable
@@ -66,7 +66,7 @@ fun HomeScaffold(
         mutableStateOf(startTab)
     }
 
-    val deckViewModel: DeckViewModel = hiltViewModel()
+    val deckViewModel: DeckListViewModel = hiltViewModel()
     val profileViewModel: ProfileViewModel = hiltViewModel()
     val statsViewModel: StatisticsViewModel = hiltViewModel()
 
