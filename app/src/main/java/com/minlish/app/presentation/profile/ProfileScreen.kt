@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.minlish.app.domain.model.enumration.InitialLevel
+import com.minlish.app.presentation.common.BunnyMainHeader
 import java.util.Locale
 
 // --- Cấu hình màu sắc ---
@@ -109,70 +110,77 @@ fun ProfileScreen(
             }
         } else {
             Column(
-                modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                modifier = Modifier.fillMaxSize().verticalScroll(scrollState),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header (Tên, Level, Avatar)
-                ProfileHeader(name, level, levelTag, avatarIdx) { showEditDialog = true }
+                BunnyMainHeader(showNotification = false)
 
-                // Stats (Bento Cards)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    StatCard(String.format(Locale.getDefault(), "%,d", wordsLearned), "Words Learned", Icons.Outlined.AutoStories, Modifier.weight(1f))
-                    StatCard(streak.toString(), "Streak", Icons.Filled.LocalFireDepartment, Modifier.weight(1f))
-                }
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    // Header (Tên, Level, Avatar)
+                    ProfileHeader(name, level, levelTag, avatarIdx) { showEditDialog = true }
 
-                // Goals Section
-                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Learning Goals", fontWeight = FontWeight.Bold, color = Color(0xFF424847), fontSize = 13.sp)
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        com.minlish.app.domain.model.enumration.LearningGoal.entries.forEach { goal ->
-                            GoalChip(
-                                text = goal.displayName,
-                                isSelected = selectedGoals.contains(goal.name)
-                            ) {
-                                notificationViewModel.toggleGoal(goal.name) {
-                                    viewModel.refreshProfile()
+                    // Stats (Bento Cards)
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        StatCard(String.format(Locale.getDefault(), "%,d", wordsLearned), "Words Learned", Icons.Outlined.AutoStories, Modifier.weight(1f))
+                        StatCard(streak.toString(), "Streak", Icons.Filled.LocalFireDepartment, Modifier.weight(1f))
+                    }
+
+                    // Goals Section
+                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Learning Goals", fontWeight = FontWeight.Bold, color = Color(0xFF424847), fontSize = 13.sp)
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            com.minlish.app.domain.model.enumration.LearningGoal.entries.forEach { goal ->
+                                GoalChip(
+                                    text = goal.displayName,
+                                    isSelected = selectedGoals.contains(goal.name)
+                                ) {
+                                    notificationViewModel.toggleGoal(goal.name) {
+                                        viewModel.refreshProfile()
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                // Notifications Group
-                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Notification Settings", fontWeight = FontWeight.Bold, color = Color(0xFF424847), fontSize = 13.sp)
-                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
-                        Column {
-                            NotificationItem("Daily reminder", "Maintain study habits", Icons.Outlined.Alarm, Color(0xFFD0F0E8), PrimaryColor, dailyReminder) {
-                                if (it && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    // Notifications Group
+                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Notification Settings", fontWeight = FontWeight.Bold, color = Color(0xFF424847), fontSize = 13.sp)
+                        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
+                            Column {
+                                NotificationItem("Daily reminder", "Maintain study habits", Icons.Outlined.Alarm, Color(0xFFD0F0E8), PrimaryColor, dailyReminder) {
+                                    if (it && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    }
+                                    notificationViewModel.setDailyReminder(it, email)
                                 }
-                                notificationViewModel.setDailyReminder(it, email)
+                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color(0xFFF0F0F0))
+                                NotificationItem("Spaced repetition", "Vocabulary review reminder", Icons.Outlined.Psychology, Color(0xFFD3E5F1), Color(0xFF50616B), spacedRepetition) { notificationViewModel.setSpacedRepetition(it) }
+                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color(0xFFF0F0F0))
+                                NotificationItem("Notification Email", "Send a reminder to study", Icons.Outlined.Mail, Color(0xFFEEEEEE), Color(0xFF727877), emailNotify) { notificationViewModel.toggleEmailNotification(it, email) }
                             }
-                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color(0xFFF0F0F0))
-                            NotificationItem("Spaced repetition", "Vocabulary review reminder", Icons.Outlined.Psychology, Color(0xFFD3E5F1), Color(0xFF50616B), spacedRepetition) { notificationViewModel.setSpacedRepetition(it) }
-                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color(0xFFF0F0F0))
-                            NotificationItem("Notification Email", "Send a reminder to study", Icons.Outlined.Mail, Color(0xFFEEEEEE), Color(0xFF727877), emailNotify) { notificationViewModel.toggleEmailNotification(it, email) }
                         }
                     }
-                }
 
-                // Logout
-                Row(modifier = Modifier.clickable {
-                    viewModel.logout()
-                    onLogout()
-                }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.AutoMirrored.Filled.Logout, null, tint = Color(0xFFBA1A1A), modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Logout", color = Color(0xFFBA1A1A), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    // Logout
+                    Row(modifier = Modifier.clickable {
+                        viewModel.logout()
+                        onLogout()
+                    }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.AutoMirrored.Filled.Logout, null, tint = Color(0xFFBA1A1A), modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Logout", color = Color(0xFFBA1A1A), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(60.dp))
                 }
-                
-                Spacer(modifier = Modifier.height(60.dp))
             }
         }
 

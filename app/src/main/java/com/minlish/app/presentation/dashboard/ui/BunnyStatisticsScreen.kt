@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.minlish.app.presentation.common.BunnyMainHeader
 import com.minlish.app.presentation.dashboard.viewmodel.StatisticsViewModel
 import com.minlish.app.presentation.dashboard.ui.theme.*
 import com.minlish.app.presentation.dashboard.ui.components.StatBoxElement
@@ -111,51 +112,7 @@ fun BunnyStatisticsContent(
             .verticalScroll(rememberScrollState())
     ) {
         // 1. Top Bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .drawBehind {
-                    drawLine(
-                        color = Primary.copy(alpha = 0.1f),
-                        start = Offset(0f, size.height),
-                        end = Offset(size.width, size.height),
-                        strokeWidth = 2.dp.toPx()
-                    )
-                }
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(PrimaryContainer)
-                        .border(2.dp, Color.White, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("🐰", fontSize = 20.sp)
-                }
-                Text(
-                    text = "Bunny English",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Primary
-                )
-            }
-            IconButton(onClick = { }) {
-                Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = "Notifications",
-                    tint = Primary
-                )
-            }
-        }
+        BunnyMainHeader(showNotification = false)
 
         // Nội dung chính bên trong Main
         Column(

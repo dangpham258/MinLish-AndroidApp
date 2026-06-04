@@ -24,7 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.minlish.app.domain.model.Deck
-import com.minlish.app.presentation.common.BunnyAppBar
+import com.minlish.app.presentation.common.BunnyMainHeader
 import com.minlish.app.presentation.deck.viewmodel.DeckListViewModel
 import com.minlish.app.presentation.theme.DeckColors
 import com.minlish.app.presentation.theme.DeckTypography
@@ -151,7 +151,7 @@ fun ListOfDeckScreen(
         modifier = modifier,
         containerColor = DeckColors.Background,
         topBar = {
-            BunnyAppBar(title = "Bunny English", onBackClick = null)
+            BunnyMainHeader(showNotification = false)
         },
         floatingActionButton = {
             FloatingActionButton(
