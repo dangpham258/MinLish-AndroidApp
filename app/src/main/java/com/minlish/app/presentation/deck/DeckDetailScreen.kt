@@ -106,9 +106,6 @@ fun DeckDetailScreen(
         topBar = {
             BunnyAppBar(title = "Bunny English", onBackClick = onNavigateBack)
         },
-        bottomBar = {
-            BunnyBottomNavBar(selectedTab = BunnyTab.LESSONS, onTabSelected = {})
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { onNavigateToAddWord(deckId) },

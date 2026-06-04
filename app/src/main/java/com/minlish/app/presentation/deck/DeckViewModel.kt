@@ -45,6 +45,12 @@ class DeckViewModel @Inject constructor(
     private val _loadingProgress = MutableStateFlow<Map<String, Int>>(emptyMap())
     val loadingProgress: StateFlow<Map<String, Int>> = _loadingProgress.asStateFlow()
 
+    /** Event phát ra sau khi deck được lưu lên Firebase thành công.
+     *  UI lắng nghe event này để navigate back đúng thời điểm.
+     */
+    private val _deckCreatedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val deckCreatedEvent: SharedFlow<Unit> = _deckCreatedEvent.asSharedFlow()
+
     init {
         syncDataIfNeeded()
         loadDecks()
@@ -141,9 +147,10 @@ class DeckViewModel @Inject constructor(
             )
             // Optimistic update: hiển thị ngay trước khi Firebase xác nhận
             _decks.value = _decks.value + newDeck
-            // Lưu lên Firebase, sau đó reload để đồng bộ dữ liệu chính xác từ server
+            // Lưu lên Firebase (suspend — chờ hoàn thành mới tiếp tục)
             repository.insertDeck(newDeck)
-            loadDecks()
+            // Emit event để UI navigate back — đảm bảo Firebase đã có dữ liệu trước khi quay lại
+            _deckCreatedEvent.emit(Unit)
         }
     }
 

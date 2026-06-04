@@ -107,7 +107,7 @@ fun SignUpScreen(
                     IconButton(onClick = onNavigateToLogin) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
+                            contentDescription = "Back",
                             tint = PrimaryBlue
                         )
                     }
@@ -146,14 +146,14 @@ fun SignUpScreen(
                     horizontalAlignment = Alignment.Start
                 ) {
                     Text(
-                        text = "Tạo tài khoản mới",
+                        text = "Create an account",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.W800,
                         color = OnSurfaceText
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Bắt đầu hành trình chinh phục tiếng Anh cùng Bunny ngay hôm nay!",
+                        text = "Start your English learning journey with Bunny today!",
                         fontSize = 15.sp,
                         color = OnSurfaceVariant
                     )
@@ -174,7 +174,7 @@ fun SignUpScreen(
 
                 Column {
                     Text(
-                        text = "Họ và tên",
+                        text = "Full Name",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = OnSurfaceVariant,
@@ -183,7 +183,7 @@ fun SignUpScreen(
                     OutlinedTextField(
                         value = fullName,
                         onValueChange = { fullName = it },
-                        placeholder = { Text("Nguyễn Văn A", color = OutlineVariant) },
+                        placeholder = { Text("John Doe", color = OutlineVariant) },
                         leadingIcon = {
                             Icon(Icons.Default.Person, contentDescription = null, tint = OnSurfaceVariant)
                         },
@@ -210,7 +210,7 @@ fun SignUpScreen(
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        placeholder = { Text("email@vi-du.com", color = OutlineVariant) },
+                        placeholder = { Text("your@email.com", color = OutlineVariant) },
                         leadingIcon = {
                             Icon(Icons.Default.Email, contentDescription = null, tint = OnSurfaceVariant)
                         },
@@ -229,7 +229,7 @@ fun SignUpScreen(
 
                 Column {
                     Text(
-                        text = "Mật khẩu",
+                        text = "Password",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = OnSurfaceVariant,
@@ -238,7 +238,7 @@ fun SignUpScreen(
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        placeholder = { Text("••••••••", color = OutlineVariant) },
+                        placeholder = { Text("Enter your password", color = OutlineVariant) },
                         leadingIcon = {
                             Icon(Icons.Default.Lock, contentDescription = null, tint = OnSurfaceVariant)
                         },
@@ -246,7 +246,7 @@ fun SignUpScreen(
                             IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                                 Icon(
                                     imageVector = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = "Ẩn/hiển thị mật khẩu",
+                                    contentDescription = "Toggle password visibility",
                                     tint = OnSurfaceVariant
                                 )
                             }
@@ -266,7 +266,7 @@ fun SignUpScreen(
 
                 Column {
                     Text(
-                        text = "Xác nhận mật khẩu",
+                        text = "Confirm Password",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = OnSurfaceVariant,
@@ -275,7 +275,7 @@ fun SignUpScreen(
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
-                        placeholder = { Text("••••••••", color = OutlineVariant) },
+                        placeholder = { Text("Re-enter your password", color = OutlineVariant) },
                         leadingIcon = {
                             Icon(Icons.Default.CheckCircle, contentDescription = null, tint = OnSurfaceVariant)
                         },
@@ -305,7 +305,7 @@ fun SignUpScreen(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Tôi đồng ý với Điều khoản sử dụng và Chính sách bảo mật của Bunny English.",
+                        text = "I agree to Bunny English's Terms of Service and Privacy Policy.",
                         fontSize = 13.sp,
                         color = OnSurfaceVariant,
                         lineHeight = 16.sp
@@ -340,7 +340,7 @@ fun SignUpScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Đăng ký tài khoản",
+                                text = "Create Account",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -364,7 +364,7 @@ fun SignUpScreen(
                 ) {
                     HorizontalDivider(modifier = Modifier.weight(1f), color = OutlineVariant)
                     Text(
-                        text = "HOẶC",
+                        text = "OR",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = OnSurfaceVariant,
@@ -390,7 +390,7 @@ fun SignUpScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Đăng ký với Google",
+                            text = "Sign up with Google",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -398,7 +398,7 @@ fun SignUpScreen(
                 }
 
                 Text(
-                    text = "Đã có tài khoản? Đăng nhập",
+                    text = "Already have an account? Sign in",
                     fontSize = 14.sp,
                     color = OnSurfaceVariant,
                     textAlign = TextAlign.Center,

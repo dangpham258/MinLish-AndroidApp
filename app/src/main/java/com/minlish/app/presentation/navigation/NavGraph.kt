@@ -13,30 +13,52 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
-import com.minlish.app.data.UserSession
 import com.minlish.app.presentation.auth.ui.ForgotPasswordScreen
 import com.minlish.app.presentation.auth.ui.LoginScreen
 import com.minlish.app.presentation.auth.ui.ResetPasswordScreen
 import com.minlish.app.presentation.auth.ui.SignUpScreen
 import com.minlish.app.presentation.auth.viewmodel.AuthViewModel
 import com.minlish.app.presentation.main.MainScreen
-import com.minlish.app.presentation.dashboard.ui.BunnyStatisticsScreen
-import com.minlish.app.presentation.dashboard.viewmodel.StatisticsViewModel
 
+/**
+ * AppNavHost — Single source of truth cho toàn bộ navigation.
+ *
+ * Cấu trúc:
+ *   Auth graph    → Login, SignUp, ForgotPassword, ResetPassword
+ *   Home graph    → HomeScaffold (3 tab: Dashboard, Lessons, Profile)
+ *                   — Quản lý bottom nav bên trong HomeScaffold
+ *   Detail routes → deckNavGraph (DeckDetail, CreateDeck, AddUpdateWord)
+ *                   studyMethodNavGraph (Flashcard, SRS, ContextLearning)
+ *
+ * Nguyên tắc:
+ * - Mỗi route chỉ được khai báo MỘT LẦN duy nhất.
+ * - Screens nhận callbacks, không nhận NavHostController.
+ * - Bottom nav bar chỉ ở HomeScaffold, không ở từng màn hình riêng.
+ */
 @Composable
 fun AppNavHost(
     navController: NavHostController,
     viewModel: AuthViewModel = hiltViewModel(),
     deepLinkIntent: Intent? = null
 ) {
+    val isUserLoggedIn by viewModel.isUserLoggedIn.collectAsState()
+
+    // Tự động chuyển sang Home khi auth state thay đổi thành logged in
+    LaunchedEffect(isUserLoggedIn) {
+        if (isUserLoggedIn == true) {
+            navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Auth.route) { inclusive = true }
+            }
+        }
+    }
+
+    // Xử lý deep link reset password
     LaunchedEffect(deepLinkIntent) {
         deepLinkIntent?.data?.let { uri ->
             android.util.Log.d("NavGraph", "Deep link received: $uri")
-            
             if (uri.path?.contains("resetPassword") == true || uri.host?.contains("google") == true) {
                 val mode = uri.getQueryParameter("mode")
                 val oobCode = uri.getQueryParameter("oobCode")
-                
                 if (mode == "resetPassword" && !oobCode.isNullOrEmpty()) {
                     navController.navigate(Screen.ResetPassword.createRoute(oobCode))
                 }
@@ -48,6 +70,7 @@ fun AppNavHost(
         navController = navController,
         startDestination = Screen.Auth.route
     ) {
+        // AUTH GRAPH
         navigation(
             startDestination = Screen.Login.route,
             route = Screen.Auth.route
@@ -55,26 +78,20 @@ fun AppNavHost(
             composable(Screen.Login.route) {
                 LoginScreen(
                     onLoginSuccess = {
-                        navController.navigate(Screen.Dashboard.route) {
+                        navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Auth.route) { inclusive = true }
                         }
                     },
-                    onNavigateToRegister = {
-                        navController.navigate(Screen.SignUp.route)
-                    },
-                    onNavigateToForgotPassword = {
-                        navController.navigate(Screen.ForgotPassword.route)
-                    }
+                    onNavigateToRegister = { navController.navigate(Screen.SignUp.route) },
+                    onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) }
                 )
             }
 
             composable(Screen.SignUp.route) {
                 SignUpScreen(
-                    onNavigateToLogin = {
-                        navController.popBackStack()
-                    },
+                    onNavigateToLogin = { navController.popBackStack() },
                     onSignUpSuccess = {
-                        navController.navigate(Screen.Dashboard.route) {
+                        navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Auth.route) { inclusive = true }
                         }
                     }
@@ -83,30 +100,18 @@ fun AppNavHost(
 
             composable(Screen.ForgotPassword.route) {
                 ForgotPasswordScreen(
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    },
-                    onResetSent = {
-                        navController.popBackStack()
-                    }
+                    onNavigateBack = { navController.popBackStack() },
+                    onResetSent = { navController.popBackStack() }
                 )
             }
 
             composable(
                 route = Screen.ResetPassword.route,
-                arguments = listOf(
-                    navArgument("oobCode") { type = NavType.StringType }
-                ),
+                arguments = listOf(navArgument("oobCode") { type = NavType.StringType }),
                 deepLinks = listOf(
-                    navDeepLink {
-                        uriPattern = "https://minlish.app/?mode=resetPassword&oobCode={oobCode}"
-                    },
-                    navDeepLink {
-                        uriPattern = "https://minlish-1e2ec.firebaseapp.com/?mode=resetPassword&oobCode={oobCode}"
-                    },
-                    navDeepLink {
-                        uriPattern = "minlish://reset_password/{oobCode}"
-                    }
+                    navDeepLink { uriPattern = "https://minlish.app/?mode=resetPassword&oobCode={oobCode}" },
+                    navDeepLink { uriPattern = "https://minlish-1e2ec.firebaseapp.com/?mode=resetPassword&oobCode={oobCode}" },
+                    navDeepLink { uriPattern = "minlish://reset_password/{oobCode}" }
                 )
             ) { backStackEntry ->
                 val oobCode = backStackEntry.arguments?.getString("oobCode") ?: ""
@@ -117,26 +122,33 @@ fun AppNavHost(
                             popUpTo(Screen.Auth.route) { inclusive = true }
                         }
                     },
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    }
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
         }
 
-        composable(Screen.Main.route) {
+        // ─────────────────────────────────────────────────────────────
+        // HOME GRAPH — Chứa HomeScaffold với bottom navigation
+        // Tab mặc định: Dashboard (STATS) theo yêu cầu người dùng
+        // ─────────────────────────────────────────────────────────────
+        composable(route = Screen.Home.route) {
             MainScreen(navController = navController)
         }
 
-        composable(Screen.Dashboard.route) {
-            val statsViewModel: StatisticsViewModel = hiltViewModel()
-            BunnyStatisticsScreen(
-                viewModel = statsViewModel,
-                navController = navController
-            )
+        // Legacy route — redirect sang Home để tránh crash nếu có link cũ
+        composable(route = Screen.Main.route) {
+            MainScreen(navController = navController)
         }
 
+        // ─────────────────────────────────────────────────────────────
+        // DETAIL SCREENS — Không có bottom navigation bar
+        // Khai báo một lần duy nhất tại đây, thông qua extension functions
+        // ─────────────────────────────────────────────────────────────
+
+        // Deck flows: ListOfDeck (khi vào từ deep link), DeckDetail, CreateDeck, AddUpdateWord
         deckNavGraph(navController)
+
+        // Study method flows: Flashcard, SRS, ContextLearning
         studyMethodNavGraph(navController)
     }
 }

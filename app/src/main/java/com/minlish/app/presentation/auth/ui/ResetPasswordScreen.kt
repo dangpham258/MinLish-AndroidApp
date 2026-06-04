@@ -69,7 +69,7 @@ fun ResetPasswordScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Trở về",
+                            contentDescription = "Back",
                             tint = PrimaryBlue
                         )
                     }
@@ -138,7 +138,7 @@ fun ResetPasswordScreen(
             if (isSuccess) {
                 // ===== SUCCESS STATE =====
                 Text(
-                    text = "Đặt lại mật khẩu thành công!",
+                    text = "Password reset successful!",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = OnSurfaceText,
@@ -148,7 +148,7 @@ fun ResetPasswordScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Bạn có thể đăng nhập với mật khẩu mới",
+                    text = "You can now sign in with your new password",
                     fontSize = 15.sp,
                     color = OnSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -165,7 +165,7 @@ fun ResetPasswordScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
                 ) {
                     Text(
-                        text = "Đăng nhập",
+                        text = "Sign In",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = OnPrimary
@@ -174,7 +174,7 @@ fun ResetPasswordScreen(
             } else {
                 // ===== PASSWORD RESET FORM =====
                 Text(
-                    text = "Đặt mật khẩu mới",
+                    text = "Set New Password",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = OnSurfaceText,
@@ -182,7 +182,7 @@ fun ResetPasswordScreen(
                 )
 
                 Text(
-                    text = "Nhập mật khẩu mới cho tài khoản của bạn",
+                    text = "Enter a new password for your account",
                     fontSize = 15.sp,
                     color = OnSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -191,7 +191,7 @@ fun ResetPasswordScreen(
 
                 // Password
                 Text(
-                    text = "Mật khẩu mới",
+                    text = "New Password",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = OnSurfaceVariant,
@@ -205,13 +205,13 @@ fun ResetPasswordScreen(
                         password = it
                         passwordError = null
                     },
-                    placeholder = { Text("Nhập mật khẩu mới", color = OutlineVariant) },
+                    placeholder = { Text("Enter new password", color = OutlineVariant) },
                     leadingIcon = { Icon(Icons.Default.Lock, "Lock", tint = PrimaryBlue) },
                     trailingIcon = {
                         IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                             Icon(
                                 if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = "Hiển thị mật khẩu",
+                                contentDescription = "Toggle password visibility",
                                 tint = OnSurfaceVariant
                             )
                         }
@@ -232,7 +232,7 @@ fun ResetPasswordScreen(
 
                 // Confirm Password
                 Text(
-                    text = "Xác nhận mật khẩu",
+                    text = "Confirm Password",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = OnSurfaceVariant,
@@ -246,13 +246,13 @@ fun ResetPasswordScreen(
                         confirmPassword = it
                         passwordError = null
                     },
-                    placeholder = { Text("Nhập lại mật khẩu", color = OutlineVariant) },
+                    placeholder = { Text("Re-enter your password", color = OutlineVariant) },
                     leadingIcon = { Icon(Icons.Default.Lock, "Lock", tint = PrimaryBlue) },
                     trailingIcon = {
                         IconButton(onClick = { isConfirmPasswordVisible = !isConfirmPasswordVisible }) {
                             Icon(
                                 if (isConfirmPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = "Hiển thị mật khẩu",
+                                contentDescription = "Toggle password visibility",
                                 tint = OnSurfaceVariant
                             )
                         }
@@ -289,10 +289,10 @@ fun ResetPasswordScreen(
                     onClick = {
                         when {
                             password.length < 6 -> {
-                                passwordError = "Mật khẩu phải có ít nhất 6 ký tự"
+                                passwordError = "Password must be at least 6 characters"
                             }
                             password != confirmPassword -> {
-                                passwordError = "Mật khẩu không khớp"
+                                passwordError = "Passwords do not match"
                             }
                             else -> {
                                 scope.launch {
@@ -300,7 +300,7 @@ fun ResetPasswordScreen(
                                     if (result.isSuccess) {
                                         isSuccess = true
                                     } else {
-                                        passwordError = result.exceptionOrNull()?.message ?: "Có lỗi xảy ra"
+                                        passwordError = result.exceptionOrNull()?.message ?: "An error occurred"
                                     }
                                 }
                             }
@@ -317,7 +317,7 @@ fun ResetPasswordScreen(
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     } else {
                         Text(
-                            text = "Đặt lại mật khẩu",
+                            text = "Reset Password",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = OnPrimary

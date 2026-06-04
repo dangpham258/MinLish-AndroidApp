@@ -49,10 +49,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import com.minlish.app.presentation.common.BunnyBottomNavBar
-import com.minlish.app.presentation.common.BunnyTab
-import com.minlish.app.presentation.navigation.Screen
 import com.minlish.app.presentation.dashboard.viewmodel.StatisticsViewModel
 import com.minlish.app.presentation.dashboard.ui.theme.*
 import com.minlish.app.presentation.dashboard.ui.components.StatBoxElement
@@ -61,53 +57,34 @@ import com.minlish.app.presentation.dashboard.ui.components.RetentionCurveCard
 import com.minlish.app.presentation.dashboard.ui.components.MilestoneCard
 import java.util.Calendar
 
+/**
+ * BunnyStatisticsScreen — Màn hình thống kê.
+ *
+ * Nhận callbacks thay vì NavHostController để tuân thủ nguyên tắc
+ * single-source-of-truth navigation (HomeScaffold điều hướng, không phải screen này).
+ */
 @Composable
 fun BunnyStatisticsScreen(
     viewModel: StatisticsViewModel,
-    navController: NavHostController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToSRS: (String) -> Unit = {}
 ) {
     androidx.compose.runtime.LaunchedEffect(Unit) {
         viewModel.fetchDashboardTelemetry()
     }
 
-    Scaffold(
-        bottomBar = {
-            BunnyBottomNavBar(
-                selectedTab = BunnyTab.STATS,
-                onTabSelected = { tab ->
-                    when (tab) {
-                        BunnyTab.LESSONS -> {
-                            navController.navigate(Screen.ListOfDeck.route) {
-                                popUpTo(Screen.Dashboard.route) { inclusive = true }
-                            }
-                        }
-                        BunnyTab.STATS -> {
-                            // Đã ở đây
-                        }
-                        BunnyTab.PROFILE -> {
-                            navController.navigate(Screen.Main.route) {
-                                popUpTo(Screen.Dashboard.route) { inclusive = true }
-                            }
-                        }
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        BunnyStatisticsContent(
-            viewModel = viewModel,
-            navController = navController,
-            modifier = modifier.padding(innerPadding)
-        )
-    }
+    BunnyStatisticsContent(
+        viewModel = viewModel,
+        modifier = modifier,
+        onNavigateToSRS = onNavigateToSRS
+    )
 }
 
 @Composable
 fun BunnyStatisticsContent(
     viewModel: StatisticsViewModel,
-    navController: NavHostController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToSRS: (String) -> Unit = {}
 ) {
     val stats by viewModel.userProgress.collectAsState()
     val reports by viewModel.weeklyActivity.collectAsState()
@@ -349,7 +326,7 @@ fun BunnyStatisticsContent(
                                     .height(56.dp)
                                     .align(Alignment.TopCenter)
                                     .background(SecondaryContainer, RoundedCornerShape(16.dp))
-                                    .clickable { navController.navigate(Screen.SRS.createRoute("all_due")) }
+                                    .clickable { onNavigateToSRS("all_due") }
                                     .padding(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically

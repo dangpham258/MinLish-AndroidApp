@@ -37,16 +37,6 @@ fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
                 },
                 onNavigateToCreateDeck = {
                     navController.navigate(Screen.CreateDeck.route)
-                },
-                onNavigateToDashboard = {
-                    navController.navigate(Screen.Dashboard.route) {
-                        popUpTo(Screen.ListOfDeck.route) { inclusive = true }
-                    }
-                },
-                onNavigateToProfile = {
-                    navController.navigate(Screen.Main.route) {
-                        popUpTo(Screen.ListOfDeck.route) { inclusive = true }
-                    }
                 }
             )
         }

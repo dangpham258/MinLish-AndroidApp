@@ -24,7 +24,7 @@ data class UserProfile(
     val avatarIndex: Int = 0,
     val wordsLearned: Int = 0,
     val streak: Int = 0,
-    val tags: List<LearningGoal> = emptyList(),
+    val tags: List<LearningGoal> = emptyList()
 )
 
 data class UserSetting(

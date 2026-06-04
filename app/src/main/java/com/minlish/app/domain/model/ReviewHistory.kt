@@ -1,4 +1,5 @@
 package com.minlish.app.domain.model
+
 import com.minlish.app.domain.model.enumration.EaseFactor
 import java.util.Date
 

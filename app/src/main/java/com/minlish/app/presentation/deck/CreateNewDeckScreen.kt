@@ -31,6 +31,14 @@ fun CreateNewDeckScreen(
 
     // Tags chỉ từ LearningGoal enum, không cho thêm tự do
     var selectedGoals by remember { mutableStateOf(setOf<LearningGoal>()) }
+    var isSaving by remember { androidx.compose.runtime.mutableStateOf(false) }
+
+    // Navigate back sau khi Firebase đã lưu xong — tránh race condition
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.deckCreatedEvent.collect {
+            onNavigateBack()
+        }
+    }
 
     Scaffold(
         containerColor = DeckColors.Background,
@@ -205,17 +213,19 @@ fun CreateNewDeckScreen(
 
             Button(
                 onClick = {
-                    if (name.isNotBlank()) {
+                    if (name.isNotBlank() && !isSaving) {
+                        isSaving = true
                         viewModel.createDeck(
                             name = name,
                             description = description,
                             // Truyền name của enum để ViewModel dùng LearningGoal.valueOf()
                             tags = selectedGoals.map { it.name }
                         )
-                        onNavigateBack()
+                        // Không gọi onNavigateBack() ở đây!
+                        // UI sẽ navigate sau khi deckCreatedEvent được emit (Firebase hoàn thành)
                     }
                 },
-                enabled = name.isNotBlank(),
+                enabled = name.isNotBlank() && !isSaving,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

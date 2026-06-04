@@ -95,12 +95,6 @@ fun LearnScreen(
 
             Scaffold(
                 topBar = { BunnyAppBar(onBackClick = onNavigateBack) },
-                bottomBar = {
-                    BunnyBottomNavBar(
-                        selectedTab = BunnyTab.LESSONS,
-                        onTabSelected = { /* Handle navigation if needed */ }
-                    )
-                },
                 containerColor = BunnyColors.Background,
                 modifier = modifier
             ) { innerPadding ->

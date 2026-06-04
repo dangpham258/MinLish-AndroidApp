@@ -15,6 +15,5 @@ data class Deck(
     val streak: Int = 0,
     val totalWords: Int = 0
 ) {
-    // Alias for deckName if used in some places
     val deckName: String get() = name
 }

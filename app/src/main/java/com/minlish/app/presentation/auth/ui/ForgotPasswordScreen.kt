@@ -49,11 +49,11 @@ fun ForgotPasswordScreen(
         val emailPattern = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$".toRegex()
         return when {
             target.isBlank() -> {
-                emailError = "Vui lòng nhập email của bạn"
+                emailError = "Please enter your email"
                 false
             }
             !target.matches(emailPattern) -> {
-                emailError = "Định dạng email không hợp lệ"
+                emailError = "Invalid email format"
                 false
             }
             else -> {
@@ -79,7 +79,7 @@ fun ForgotPasswordScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Trở về",
+                            contentDescription = "Back",
                             tint = PrimaryBlue
                         )
                     }
@@ -148,7 +148,7 @@ fun ForgotPasswordScreen(
             if (isEmailSent) {
                 // ===== SUCCESS STATE =====
                 Text(
-                    text = "Đã gửi email!",
+                    text = "Email sent!",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = OnSurfaceText,
@@ -156,7 +156,7 @@ fun ForgotPasswordScreen(
                 )
 
                 Text(
-                    text = "Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến\n$email",
+                    text = "We've sent password reset instructions to\n$email",
                     fontSize = 15.sp,
                     color = OnSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -170,14 +170,14 @@ fun ForgotPasswordScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Hướng dẫn:",
+                            text = "Instructions:",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = PrimaryBlue
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "1. Mở email từ Bunny English\n2. Bấm vào link 'Đặt lại mật khẩu'\n3. Nhập mật khẩu mới trên trang Firebase\n4. Đăng nhập với mật khẩu mới",
+                            text = "1. Open the email from Bunny English\n2. Click the 'Reset Password' link\n3. Enter your new password on Firebase\n4. Sign in with your new password",
                             fontSize = 13.sp,
                             color = OnSurfaceVariant,
                             lineHeight = 22.sp
@@ -197,12 +197,12 @@ fun ForgotPasswordScreen(
                         .height(56.dp),
                     shape = RoundedCornerShape(CORNER_RADIUS.dp)
                 ) {
-                    Text("Gửi đến email khác", color = PrimaryBlue)
+                    Text("Send to another email", color = PrimaryBlue)
                 }
             } else {
                 // ===== INPUT STATE =====
                 Text(
-                    text = "Quên mật khẩu?",
+                    text = "Forgot Password?",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = OnSurfaceText,
@@ -210,7 +210,7 @@ fun ForgotPasswordScreen(
                 )
 
                 Text(
-                    text = "Nhập email đã đăng ký, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu cho bạn",
+                    text = "Enter your registered email and we'll send you password reset instructions",
                     fontSize = 15.sp,
                     color = OnSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -233,7 +233,7 @@ fun ForgotPasswordScreen(
                         email = it
                         if (emailError != null) validateEmail(it)
                     },
-                    placeholder = { Text("email@example.com", color = OutlineVariant) },
+                    placeholder = { Text("Enter your email", color = OutlineVariant) },
                     leadingIcon = { Icon(Icons.Default.Email, "Email", tint = PrimaryBlue) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(CORNER_RADIUS.dp),
@@ -272,7 +272,7 @@ fun ForgotPasswordScreen(
                                     isEmailSent = true
                                 } else {
                                     snackbarHostState.showSnackbar(
-                                        result.exceptionOrNull()?.message ?: "Có lỗi xảy ra"
+                                        result.exceptionOrNull()?.message ?: "An error occurred"
                                     )
                                 }
                             }
@@ -289,7 +289,7 @@ fun ForgotPasswordScreen(
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     } else {
                         Text(
-                            text = "Gửi hướng dẫn",
+                            text = "Send Instructions",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = OnPrimary

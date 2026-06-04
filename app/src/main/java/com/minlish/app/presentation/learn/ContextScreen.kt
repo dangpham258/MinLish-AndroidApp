@@ -87,12 +87,6 @@ fun ContextScreen(
 
     Scaffold(
         topBar = { BunnyAppBar(onBackClick = onNavigateBack) },
-        bottomBar = { 
-            BunnyBottomNavBar(
-                selectedTab = BunnyTab.LESSONS,
-                onTabSelected = { /* Handle navigation if needed */ }
-            ) 
-        },
         containerColor = ContextScreenColors.SurfaceBackground,
         modifier = modifier
     ) { innerPadding ->
@@ -452,12 +446,6 @@ fun ContextScreenPreview() {
     // Simplified UI for Preview to avoid ViewModel complex setup
     Scaffold(
         topBar = { BunnyAppBar(onBackClick = {}) },
-        bottomBar = { 
-            BunnyBottomNavBar(
-                selectedTab = BunnyTab.LESSONS,
-                onTabSelected = {}
-            ) 
-        },
         containerColor = ContextScreenColors.SurfaceBackground
     ) { innerPadding ->
         Column(
