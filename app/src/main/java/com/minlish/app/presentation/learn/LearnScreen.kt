@@ -54,7 +54,6 @@ enum class LearnMode {
     FLASHCARD, SRS
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LearnScreen(
     viewModel: LearnViewModel,

@@ -102,7 +102,7 @@ fun ContextScreen(
 
             // Progress Section (Mirror LearnScreen)
             val progress = if (items.isNotEmpty()) learnedCount.toFloat() / items.size else 1f
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

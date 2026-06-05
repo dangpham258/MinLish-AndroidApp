@@ -289,7 +289,7 @@ fun ForgotPasswordScreen(
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     } else {
                         Text(
-                            text = "Send Instructions",
+                            text = "Send Link Reset",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = OnPrimary
