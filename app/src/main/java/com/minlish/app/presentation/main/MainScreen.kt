@@ -43,25 +43,13 @@ private val BunnyTabSaver = Saver<BunnyTab, String>(
     restore = { name -> BunnyTab.entries.firstOrNull { it.name == name } ?: BunnyTab.STATS }
 )
 
-/**
- * HomeScaffold — Wrapper duy nhất quản lý bottom navigation bar.
- *
- * FIX #1 — Tab state survive navigation back (DeckDetail → Home):
- *   rememberSaveable + BunnyTabSaver: khi popBackStack() về Screen.Home,
- *   tab LESSONS được khôi phục thay vì reset về STATS.
- *
- * FIX #2 — Deck list tự refresh khi quay lại từ CreateDeck:
- *   Dùng currentBackStackEntryAsState: mỗi khi destination đổi về Screen.Home,
- *   gọi loadDecks(). Kết hợp với deckCreatedEvent trong CreateDeckViewModel (navigate
- *   sau khi Firebase write hoàn tất), đảm bảo deck mới luôn xuất hiện ngay lập tức.
- */
+// HomeScaffold — Wrapper duy nhất quản lý bottom navigation bar.
 @Composable
 fun HomeScaffold(
     navController: NavHostController,
     startTab: BunnyTab = BunnyTab.STATS,
     mainViewModel: MainViewModel = hiltViewModel()
 ) {
-    // FIX #1: rememberSaveable giữ lại tab đã chọn khi quay lại từ DeckDetail/CreateDeck
     var currentTab by rememberSaveable(stateSaver = BunnyTabSaver) {
         mutableStateOf(startTab)
     }
@@ -70,10 +58,6 @@ fun HomeScaffold(
     val profileViewModel: ProfileViewModel = hiltViewModel()
     val statsViewModel: StatisticsViewModel = hiltViewModel()
 
-    // FIX #2: Reload danh sách decks mỗi khi quay lại Screen.Home
-    // currentBackStackEntryAsState() recompose khi destination thay đổi
-    // → khi popBackStack() từ CreateDeck về Home, loadDecks() được gọi
-    // Lúc này Firebase đã có deck mới (vì deckCreatedEvent chỉ emit sau insertDeck hoàn thành)
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
     androidx.compose.runtime.LaunchedEffect(currentRoute) {
