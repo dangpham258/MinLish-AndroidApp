@@ -11,8 +11,8 @@ import java.util.concurrent.TimeUnit
 
 object DailyReminderScheduler {
     private const val WORK_NAME = "minlish_daily_reminder"
-    private const val REMINDER_HOUR = 17
-    private const val REMINDER_MINUTE = 18
+    private const val REMINDER_HOUR = 16
+    private const val REMINDER_MINUTE = 55
 
     fun scheduleIfAbsent(context: Context, userId: String, email: String) {
         schedule(context, userId, email, ExistingWorkPolicy.KEEP)

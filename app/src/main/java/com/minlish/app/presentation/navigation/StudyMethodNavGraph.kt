@@ -12,12 +12,7 @@ import com.minlish.app.presentation.learn.LearnMode
 import com.minlish.app.presentation.learn.LearnScreen
 import com.minlish.app.presentation.learn.LearnViewModel
 
-/**
- * studyMethodNavGraph — Định nghĩa các route cho các phương thức học.
- *
- * Được gọi từ AppNavHost (NavGraph.kt).
- * Không được khai báo lại ở NavGraph.kt trực tiếp.
- */
+
 fun NavGraphBuilder.studyMethodNavGraph(navController: NavHostController) {
 
     composable(
@@ -27,8 +22,6 @@ fun NavGraphBuilder.studyMethodNavGraph(navController: NavHostController) {
         val deckId = backStackEntry.arguments?.getString("deckId") ?: ""
         val learnViewModel: LearnViewModel = hiltViewModel()
 
-        // Đồng bộ cấu trúc dữ liệu mới bằng cách đẩy thẳng dữ liệu lấy từ Firebase Node
-        // thông qua hàm điều phối selectDeckById của LearnViewModel
         LaunchedEffect(deckId) {
             learnViewModel.selectDeckById(deckId)
         }
@@ -47,7 +40,6 @@ fun NavGraphBuilder.studyMethodNavGraph(navController: NavHostController) {
         val deckId = backStackEntry.arguments?.getString("deckId") ?: ""
         val learnViewModel: LearnViewModel = hiltViewModel()
 
-        // Khởi động thiết lập trạng thái ôn tập Spaced Repetition an toàn
         LaunchedEffect(deckId) {
             learnViewModel.selectDeckById(deckId)
         }

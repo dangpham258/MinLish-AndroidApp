@@ -20,21 +20,7 @@ import com.minlish.app.presentation.auth.ui.SignUpScreen
 import com.minlish.app.presentation.auth.viewmodel.AuthViewModel
 import com.minlish.app.presentation.main.MainScreen
 
-/**
- * AppNavHost — Single source of truth cho toàn bộ navigation.
- *
- * Cấu trúc:
- *   Auth graph    → Login, SignUp, ForgotPassword, ResetPassword
- *   Home graph    → HomeScaffold (3 tab: Dashboard, Lessons, Profile)
- *                   — Quản lý bottom nav bên trong HomeScaffold
- *   Detail routes → deckNavGraph (DeckDetail, CreateDeck, AddUpdateWord)
- *                   studyMethodNavGraph (Flashcard, SRS, ContextLearning)
- *
- * Nguyên tắc:
- * - Mỗi route chỉ được khai báo MỘT LẦN duy nhất.
- * - Screens nhận callbacks, không nhận NavHostController.
- * - Bottom nav bar chỉ ở HomeScaffold, không ở từng màn hình riêng.
- */
+
 @Composable
 fun AppNavHost(
     navController: NavHostController,
@@ -43,7 +29,6 @@ fun AppNavHost(
 ) {
     val isUserLoggedIn by viewModel.isUserLoggedIn.collectAsState()
 
-    // Tự động chuyển sang Home khi auth state thay đổi thành logged in
     LaunchedEffect(isUserLoggedIn) {
         if (isUserLoggedIn == true) {
             navController.navigate(Screen.Home.route) {
@@ -52,7 +37,6 @@ fun AppNavHost(
         }
     }
 
-    // Xử lý deep link reset password
     LaunchedEffect(deepLinkIntent) {
         deepLinkIntent?.data?.let { uri ->
             android.util.Log.d("NavGraph", "Deep link received: $uri")
@@ -127,28 +111,17 @@ fun AppNavHost(
             }
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // HOME GRAPH — Chứa HomeScaffold với bottom navigation
-        // Tab mặc định: Dashboard (STATS) theo yêu cầu người dùng
-        // ─────────────────────────────────────────────────────────────
         composable(route = Screen.Home.route) {
             MainScreen(navController = navController)
         }
 
-        // Legacy route — redirect sang Home để tránh crash nếu có link cũ
         composable(route = Screen.Main.route) {
             MainScreen(navController = navController)
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // DETAIL SCREENS — Không có bottom navigation bar
-        // Khai báo một lần duy nhất tại đây, thông qua extension functions
-        // ─────────────────────────────────────────────────────────────
 
-        // Deck flows: ListOfDeck (khi vào từ deep link), DeckDetail, CreateDeck, AddUpdateWord
         deckNavGraph(navController)
 
-        // Study method flows: Flashcard, SRS, ContextLearning
         studyMethodNavGraph(navController)
     }
 }

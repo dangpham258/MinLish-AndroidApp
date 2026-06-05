@@ -18,18 +18,7 @@ import com.minlish.app.presentation.deck.viewmodel.WordEditorViewModel
 
 const val DECK_GRAPH_ROUTE = "deck_graph"
 
-/**
- * Navigation graph cho toàn bộ luồng quản lý Deck & Vocabulary.
- *
- * Mỗi màn hình sử dụng ViewModel riêng biệt và được cung cấp bởi Hilt.
- * Vì mỗi ViewModel có scope là [SingletonComponent], dữ liệu sẽ được giữ nhất quán
- * trong phiên làm việc mà không cần share một ViewModel chung.
- *
- * Lưu ý về [DeckDetailViewModel] và [WordEditorViewModel]:
- * - Chúng được lấy bởi `hiltViewModel()` tương ứng với back stack entry của từng màn hình.
- * - [WordEditorViewModel] cần danh sách words để chế độ Update tìm từ cần sửa,
- *   nên nó tự load lại nếu danh sách rỗng.
- */
+
 fun NavGraphBuilder.deckNavGraph(navController: NavHostController) {
     navigation(
         startDestination = Screen.ListOfDeck.route,
